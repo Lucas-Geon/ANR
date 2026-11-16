@@ -166,7 +166,8 @@
       <button onclick="adminAction('TOGGLE_OPEN')" style="background:#20c997;">블라인드 / 전체공개 전환</button>
       <button onclick="adminAction('SET_ROUND', '1')">① 1차 신청 (장기+나이트)</button>
       <button onclick="adminAction('SET_ROUND', 'NIGHT_WEEK')" style="background:#6f42c1;">② 나이트 당첨자 주차선택</button>
-      <button onclick="adminAction('SET_ROUND', '2')">③ 2차 장기휴가 신청</button>
+      <button onclick="adminAction('SET_ROUND', '2')">③ 2차 신청 (장기+나이트)</button>
+      <button onclick="adminAction('SET_ROUND', '3')" style="background:#e8590c;">④ 3차 신청 (선착순)</button>
     </div>
 
     <!-- 통합 신청 폼 -->
@@ -174,7 +175,7 @@
       <div class="form-inputs">
         <select id="applyType" onchange="toggleFormMode()" style="font-weight:bold; border-color:#0056b3;">
           <option value="LEAVE">🏖️ 장기휴가 신청 (1순위)</option>
-          <option value="NIGHT_APPLY">🌙 나이트킵 신청 (1차 희망월)</option>
+          <option value="NIGHT_APPLY">🌙 나이트킵 신청 (희망 월)</option>
           <option value="NIGHT_WEEK">🌙 나이트 당첨자 오프주 선택</option>
         </select>
 
@@ -208,7 +209,7 @@
   <div class="night-board">
     <div class="night-board-title">
       <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명)</span>
-      <span style="font-size:12px; font-weight:normal; color:#666;">* 1차 희망 월 접수 → 추첨 확정 후 오프 주 선택</span>
+      <span style="font-size:12px; font-weight:normal; color:#666;">* 희망 월 접수(1·2차) → 추첨 확정 후 오프 주 선택</span>
     </div>
     <div id="nightGrid" class="night-grid"></div>
   </div>
@@ -221,7 +222,7 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjHtSy28K73WCFTHwcY3OrEaoADXt1mWErecx9KThrNzr8wWQc6OUpy4owW889vlE/exec';
 
 // 백엔드(Code.gs)의 DEFAULT_NOTICE와 동일하게 유지
-const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청기간에는 자유롭게 수정 가능\n3. 2차 신청은 잔여석에 한해 선착순으로 완료됩니다";
+const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청기간에는 자유롭게 수정 가능\n3. 3차 신청 시 선착순으로 완료";
 
 let appData = { config: {}, data: [] };
 let isAdmin = false;
@@ -369,10 +370,12 @@ async function fetchData() {
       roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간';
       roundBadge.className = 'badge badge-night';
       applyTypeSelect.value = 'NIGHT_WEEK';
-    } else if (round === '2') {
-      roundBadge.innerText = '2차 장기휴가 신청 기간 (잔여석 선착순)';
+    } else if (round === '2' || round === '3') {
+      roundBadge.innerText = round === '2' ? '2차 신청 기간 (장기+나이트 · 1차 탈락자 재신청·경합)' : '3차 신청 기간 (장기휴가 선착순 즉시 확정)';
       roundBadge.className = 'badge badge-round';
-      if (applyTypeSelect.value !== 'LEAVE') applyTypeSelect.value = 'LEAVE';
+      const curType = applyTypeSelect.value;
+      // 2차: 장기/나이트 신청 가능, 3차: 장기휴가만
+      if (round === '3' ? curType !== 'LEAVE' : curType === 'NIGHT_WEEK') applyTypeSelect.value = 'LEAVE';
     } else {
       roundBadge.innerText = '1차 신청 기간 (장기휴가 + 나이트킵)';
       roundBadge.className = 'badge badge-round';
