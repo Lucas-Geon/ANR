@@ -3,20 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2027년도 장기휴가 & 나이트킵 신청 시스템</title>
+<title>2027년도 장기휴가 & 나이트킵 신청 프로그램</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #222; }
   .container { max-width: 1380px; margin: 0 auto; }
 
-  /* 데스크톱에서는 상단 고정 유지 */
+  /* 데스크톱 상단 고정 */
   .sticky-top { position: sticky; top: 0; z-index: 100; background: #f0f2f5; padding-bottom: 10px; }
-  .header { background: #fff; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .header { background: #fff; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 10px; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   .badge { padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; }
   .badge-round { background: #0056b3; color: #fff; }
   .badge-night { background: #6f42c1; color: #fff; }
   .badge-blind { background: #6c757d; color: #fff; }
   .badge-open { background: #28a745; color: #fff; }
+
+  /* 공지사항 박스 */
+  .notice-box { margin-top: 12px; padding: 11px 15px; background: #fff9db; border: 1px solid #ffe066; border-left: 4px solid #f59f00; border-radius: 6px; font-size: 13.5px; line-height: 1.55; color: #333; }
+  .notice-header { font-weight: bold; color: #d9480f; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+  .notice-content { white-space: pre-wrap; word-break: keep-all; }
+  .notice-editor { width: 100%; min-height: 76px; padding: 8px 10px; border: 1px solid #f59f00; border-radius: 6px; font-family: inherit; font-size: 13.5px; line-height: 1.5; margin-top: 6px; resize: vertical; }
 
   .form-box { background: #fff; padding: 14px 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .form-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -49,7 +56,7 @@
   .months-wrapper { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
   @media (max-width: 1024px) { .months-wrapper { grid-template-columns: 1fr; } }
 
-  .month-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; border: 1px solid #dce1e7; scroll-margin-top: 210px; }
+  .month-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; border: 1px solid #dce1e7; scroll-margin-top: 250px; }
   .month-header { background: #2c3e50; color: #fff; padding: 10px 15px; font-size: 17px; font-weight: bold; text-align: center; letter-spacing: 1px; }
 
   .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 1px solid #dee2e6; text-align: center; font-weight: bold; font-size: 13px; padding: 6px 0; }
@@ -85,11 +92,20 @@
   .person-chip.confirmed { background: #ebfbee; border-color: #40c057; font-weight: bold; }
   .person-chip.night-chip { background: #f3f0ff; border-color: #9775fa; color: #5f3dc4; font-weight: bold; }
 
-  /* 📱 모바일 최적화 (상단 틀고정 해제 + 컴팩트 레이아웃) */
+  /* 공지사항 1회 팝업 모달 */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 9999; display: none; justify-content: center; align-items: center; padding: 20px; }
+  .modal-card { background: #fff; width: 100%; max-width: 420px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden; animation: popIn 0.2s ease-out; }
+  @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-head { background: #2c3e50; color: #fff; padding: 14px 18px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 6px; }
+  .modal-body { padding: 18px; font-size: 14.5px; line-height: 1.65; color: #222; white-space: pre-wrap; background: #fffdf5; }
+  .modal-foot { padding: 12px 18px; background: #f8f9fa; text-align: right; border-top: 1px solid #eee; }
+  .modal-foot button { width: 100%; padding: 10px; font-size: 15px; background: #0056b3; }
+
+  /* 모바일 최적화 (상단 틀고정 해제) */
   @media (max-width: 768px) {
     body { padding: 10px; }
-    .sticky-top { position: static !important; } /* 상단 틀고정 해제 */
-    .month-card { scroll-margin-top: 12px; } /* 고정 헤더가 없으므로 스크롤 여백 축소 */
+    .sticky-top { position: static !important; }
+    .month-card { scroll-margin-top: 12px; }
     .header { padding: 12px 14px; }
     .header h2 { font-size: 17px !important; }
     .form-box { padding: 12px 14px; }
@@ -98,7 +114,7 @@
     .form-inputs input,
     .form-inputs button { width: 100% !important; }
     .night-board { padding: 12px 14px; }
-    .night-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } /* 모바일 2열 배치로 세로 공간 절약 */
+    .night-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .week-status-bar { padding: 5px 8px 6px 8px; }
     .part-boxes { justify-content: flex-start; }
   }
@@ -106,18 +122,41 @@
 </head>
 <body>
 
+<!-- 방문 시 1회 표출되는 공지사항 팝업 -->
+<div id="noticeModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-head">📢 공지사항 안내</div>
+    <div id="modalNoticeText" class="modal-body"></div>
+    <div class="modal-foot">
+      <button onclick="closeNoticeModal()">확인했습니다</button>
+    </div>
+  </div>
+</div>
+
 <div class="container">
   <div class="sticky-top" id="topFormArea">
     <div class="header">
-      <div>
-        <h2 style="margin:0 0 6px 0; font-size:20px;">📅 2027년 장기휴가 & 🌙 나이트킵 신청 시스템</h2>
-        <span id="roundBadge" class="badge badge-round">로딩중...</span>
-        <span id="modeBadge" class="badge badge-blind">상태 확인중...</span>
-        <span id="loadingMsg" class="loading-overlay"></span>
+      <div class="header-top">
+        <div>
+          <h2 style="margin:0 0 6px 0; font-size:20px;">📅 2027년 장기휴가 & 🌙 나이트킵 신청 프로그램</h2>
+          <span id="roundBadge" class="badge badge-round">로딩중...</span>
+          <span id="modeBadge" class="badge badge-blind">상태 확인중...</span>
+          <span id="loadingMsg" class="loading-overlay"></span>
+        </div>
+        <div>
+          <button onclick="fetchData()" style="background:#17a2b8; margin-right:5px;">새로고침</button>
+          <button id="adminToggleBtn" onclick="toggleAdminMode()" style="background:#6c757d;">관리자 모드</button>
+        </div>
       </div>
-      <div>
-        <button onclick="fetchData()" style="background:#17a2b8; margin-right:5px;">새로고침</button>
-        <button onclick="toggleAdminMode()" style="background:#6c757d;">관리자 모드</button>
+
+      <!-- 공지사항 칸 -->
+      <div class="notice-box">
+        <div class="notice-header">
+          <span>📢 [공지사항]</span>
+          <button id="saveNoticeBtn" onclick="saveNotice()" style="display:none; background:#e67700; padding:4px 10px; font-size:12px;">공지 저장</button>
+        </div>
+        <div id="noticeDisplay" class="notice-content"></div>
+        <textarea id="noticeEditor" class="notice-editor" style="display:none;" placeholder="공지사항 내용을 자유롭게 입력하세요..."></textarea>
       </div>
     </div>
 
@@ -144,8 +183,8 @@
           <option value="2동">2동 (장기 1명 / 나이트 1명)</option>
         </select>
 
-        <input type="text" id="empId" placeholder="사번 입력" style="width:115px;">
-        <input type="text" id="name" placeholder="이름 입력" style="width:105px;">
+        <input type="text" id="name" placeholder="이름 입력" maxlength="20" style="width:105px;">
+        <input type="text" id="empId" placeholder="사번 입력" maxlength="20" style="width:115px;">
 
         <input type="text" id="selectedWeek" placeholder="달력에서 원하는 주 클릭" readonly style="background:#eef5ff; border-color:#0056b3; font-weight:bold; width:200px;">
 
@@ -181,17 +220,30 @@
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjHtSy28K73WCFTHwcY3OrEaoADXt1mWErecx9KThrNzr8wWQc6OUpy4owW889vlE/exec';
 
+// 백엔드(Code.gs)의 DEFAULT_NOTICE와 동일하게 유지
+const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청기간에는 자유롭게 수정 가능\n3. 2차 신청은 잔여석에 한해 선착순으로 완료됩니다";
+
 let appData = { config: {}, data: [] };
 let isAdmin = false;
 let adminPw = '';
 let selectedWeekLabel = '';
+let currentNoticeText = '';
 
+// 2027 공휴일 (※ 설·추석 등 변동 공휴일은 인사혁신처 고시로 최종 확인 권장)
 const HOLIDAYS_2027 = {
-  '1-1': '신정', '2-6': '설연휴', '2-7': '설날', '2-8': '설연휴', '2-9': '대체휴일',
+  '1-1': '신정', '2-5': '설연휴', '2-6': '설날', '2-7': '설연휴', '2-8': '대체휴일',
   '3-1': '삼일절', '5-5': '어린이날', '5-13': '부처님오신날', '6-6': '현충일',
   '8-15': '광복절', '8-16': '대체휴일', '9-14': '추석연휴', '9-15': '추석', '9-16': '추석연휴',
-  '10-3': '개천절', '10-4': '대체휴일', '10-9': '한글날', '12-25': '성탄절'
+  '10-3': '개천절', '10-4': '대체휴일', '10-9': '한글날', '10-11': '대체휴일',
+  '12-25': '성탄절', '12-27': '대체휴일'
 };
+
+// HTML 이스케이프 (이름 등 사용자 입력을 innerHTML에 넣기 전에 반드시 통과)
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
 
 function build2027WeekMap() {
   const map = {};
@@ -252,21 +304,77 @@ function setLoading(isLoading, text = '동기화 중...') {
   document.getElementById('loadingMsg').innerText = isLoading ? text : '';
 }
 
+// 공지사항 팝업 (방문 시 1회, 내용이 바뀌면 다시 1회)
+function safeStorageGet(key) { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
+function safeStorageSet(key, val) { try { sessionStorage.setItem(key, val); } catch (e) {} }
+
+function showNoticePopupIfFirstVisit(noticeText) {
+  currentNoticeText = noticeText;
+  if (safeStorageGet('anr_notice_seen') !== noticeText) {
+    document.getElementById('modalNoticeText').innerText = noticeText;
+    document.getElementById('noticeModal').style.display = 'flex';
+  }
+}
+
+function closeNoticeModal() {
+  safeStorageSet('anr_notice_seen', currentNoticeText);
+  document.getElementById('noticeModal').style.display = 'none';
+}
+
+function syncNoticeUI() {
+  const noticeText = (appData.config && appData.config.notice) ? appData.config.notice : DEFAULT_NOTICE;
+  document.getElementById('noticeDisplay').innerText = noticeText;
+  document.getElementById('noticeEditor').value = noticeText;
+
+  if (isAdmin) {
+    document.getElementById('noticeDisplay').style.display = 'none';
+    document.getElementById('noticeEditor').style.display = 'block';
+    document.getElementById('saveNoticeBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('noticeDisplay').style.display = 'block';
+    document.getElementById('noticeEditor').style.display = 'none';
+    document.getElementById('saveNoticeBtn').style.display = 'none';
+  }
+}
+
+function setAdminUI(on) {
+  isAdmin = on;
+  if (!on) adminPw = '';
+  document.getElementById('adminPanel').style.display = on ? 'flex' : 'none';
+  document.getElementById('adminToggleBtn').innerText = on ? '관리자 모드 해제' : '관리자 모드';
+}
+
 async function fetchData() {
   setLoading(true);
   try {
-    const res = await fetch(SCRIPT_URL);
-    appData = await res.json();
+    // 관리자 모드일 때만 비밀번호를 함께 보내 이름·사번 원문을 받아옴
+    const url = (isAdmin && adminPw) ? `${SCRIPT_URL}?adminPw=${encodeURIComponent(adminPw)}` : SCRIPT_URL;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json || !json.config) throw new Error((json && json.message) || '응답 형식 오류');
+    appData = json;
+
+    // 관리자 인증 실패 시 관리자 모드 해제
+    if (isAdmin && !appData.adminOk) {
+      alert('관리자 비밀번호가 일치하지 않거나 인증이 차단되었습니다. 관리자 모드를 해제합니다.');
+      setAdminUI(false);
+      return await fetchData();
+    }
 
     const roundBadge = document.getElementById('roundBadge');
     const applyTypeSelect = document.getElementById('applyType');
+    const round = String(appData.config.round);
 
-    if (appData.config.round === 'NIGHT_WEEK') {
+    if (round === 'NIGHT_WEEK') {
       roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간';
       roundBadge.className = 'badge badge-night';
       applyTypeSelect.value = 'NIGHT_WEEK';
+    } else if (round === '2') {
+      roundBadge.innerText = '2차 장기휴가 신청 기간 (잔여석 선착순)';
+      roundBadge.className = 'badge badge-round';
+      if (applyTypeSelect.value !== 'LEAVE') applyTypeSelect.value = 'LEAVE';
     } else {
-      roundBadge.innerText = `${appData.config.round}차 장기휴가 신청 기간`;
+      roundBadge.innerText = '1차 신청 기간 (장기휴가 + 나이트킵)';
       roundBadge.className = 'badge badge-round';
       if (applyTypeSelect.value === 'NIGHT_WEEK') applyTypeSelect.value = 'LEAVE';
     }
@@ -276,10 +384,13 @@ async function fetchData() {
     modeBadge.innerText = appData.config.isOpen ? '결과 공개 (조정·추첨 모드)' : '블라인드 접수중';
     modeBadge.className = appData.config.isOpen ? 'badge badge-open' : 'badge badge-blind';
 
+    syncNoticeUI();
+    showNoticePopupIfFirstVisit(appData.config.notice || DEFAULT_NOTICE);
+
     renderNightBoard();
     renderCalendars();
   } catch (err) {
-    alert('데이터를 불러오는 중 오류가 발생했습니다.');
+    alert('데이터를 불러오는 중 오류가 발생했습니다.\n' + (err && err.message ? err.message : ''));
     console.error(err);
   } finally {
     setLoading(false);
@@ -308,12 +419,12 @@ function renderNightBoard() {
       }
       if (list.length === 0) return '<span style="color:#aaa;">공석</span>';
       return list.map(item => {
-        const dName = isAdmin ? item.realName : item.name;
+        const dName = esc(isAdmin ? (item.realName || item.name) : item.name);
         const isConf = item.status === '확정';
-        const weekChosen = item.week.includes('주차') ? `(${item.week.split(' ')[0]})` : '';
+        const weekChosen = item.week.includes('주차') ? `(${esc(item.week.split(' ')[0])})` : '';
         const btns = isAdmin ? `
-          <button class="btn-success" onclick="updateStatus(${item.rowIdx}, '확정')">당첨</button>
-          <button class="btn-danger" onclick="updateStatus(${item.rowIdx}, '탈락')">제외</button>
+          <button class="btn-success" onclick="updateStatus(${Number(item.rowIdx)}, '확정')">당첨</button>
+          <button class="btn-danger" onclick="updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
         ` : '';
         return `<span class="person-chip ${isConf ? 'night-chip' : ''}">${isConf ? '🌙' : ''}${dName}${weekChosen}${btns}</span>`;
       }).join('');
@@ -441,7 +552,7 @@ function formatPartList(list, limit) {
   if (list.length === 0) return `<span style="color:#aaa;">공석</span>`;
 
   return list.map(item => {
-    const displayName = isAdmin ? item.realName : item.name;
+    const displayName = esc(isAdmin ? (item.realName || item.name) : item.name);
     const isNight = item.type === '나이트킵';
     const isConfirmed = item.status === '확정';
     const chipClass = isNight ? 'night-chip' : (isConfirmed ? 'confirmed' : '');
@@ -449,8 +560,8 @@ function formatPartList(list, limit) {
     const suffix = isNight ? '(나이트)' : '';
 
     const adminBtns = (isAdmin && !isNight) ? `
-      <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${item.rowIdx}, '확정')">확정</button>
-      <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${item.rowIdx}, '탈락')">제외</button>
+      <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">확정</button>
+      <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
     ` : '';
 
     return `<span class="person-chip ${chipClass}">${icon}${displayName}${suffix}${adminBtns}</span>`;
@@ -462,7 +573,6 @@ function selectWeek(label) {
   document.getElementById('selectedWeek').value = label;
   renderCalendars();
 
-  // 📱 모바일(틀고정 해제 상태)에서 주차 선택 시 상단 신청 폼으로 자동 스크롤 이동
   if (window.innerWidth <= 768) {
     document.getElementById('topFormArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -471,12 +581,12 @@ function selectWeek(label) {
 async function submitForm() {
   const applyType = document.getElementById('applyType').value;
   const part = document.getElementById('part').value;
-  const empId = document.getElementById('empId').value.trim();
   const name = document.getElementById('name').value.trim();
+  const empId = document.getElementById('empId').value.trim();
   const week = document.getElementById('selectedWeek').value;
   const targetMonth = document.getElementById('targetMonth').value;
 
-  if (!empId || !name) return alert('사번과 이름을 입력해주세요.');
+  if (!name || !empId) return alert('이름과 사번을 입력해주세요.');
 
   let payload = {};
   if (applyType === 'LEAVE') {
@@ -503,8 +613,8 @@ async function submitForm() {
     const result = await res.json();
     alert(result.message);
     if (result.success) {
-      document.getElementById('empId').value = '';
       document.getElementById('name').value = '';
+      document.getElementById('empId').value = '';
       selectedWeekLabel = '';
       document.getElementById('selectedWeek').value = '';
       document.getElementById('targetMonth').value = '';
@@ -519,21 +629,36 @@ async function submitForm() {
   }
 }
 
-function toggleAdminMode() {
+async function toggleAdminMode() {
   if (isAdmin) {
-    isAdmin = false;
-    document.getElementById('adminPanel').style.display = 'none';
-    renderNightBoard();
-    renderCalendars();
+    setAdminUI(false);
+    await fetchData(); // 이름·사번 원문이 없는 일반 데이터로 다시 불러옴
     return;
   }
   const pw = prompt('관리자 비밀번호를 입력하세요:');
-  if (pw) {
-    adminPw = pw;
-    isAdmin = true;
-    document.getElementById('adminPanel').style.display = 'flex';
-    renderNightBoard();
-    renderCalendars();
+  if (!pw) return;
+  adminPw = pw;
+  setAdminUI(true);
+  await fetchData(); // 서버가 비밀번호를 검증, 실패 시 fetchData가 관리자 모드를 해제
+}
+
+async function saveNotice() {
+  const newNotice = document.getElementById('noticeEditor').value;
+  setLoading(true, '공지사항 저장 중...');
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'SAVE_NOTICE', adminPw, notice: newNotice })
+    });
+    const result = await res.json();
+    alert(result.message || '저장되었습니다.');
+    if (result.success) await fetchData();
+  } catch (err) {
+    alert('공지 저장 중 오류가 발생했습니다.');
+    console.error(err);
+  } finally {
+    setLoading(false);
   }
 }
 
@@ -548,6 +673,9 @@ async function adminAction(action, round = null) {
     const result = await res.json();
     if (!result.success) return alert(result.message);
     await fetchData();
+  } catch (err) {
+    alert('설정 변경 중 오류가 발생했습니다.');
+    console.error(err);
   } finally {
     setLoading(false);
   }
@@ -565,6 +693,9 @@ async function updateStatus(rowIdx, status) {
     const result = await res.json();
     if (!result.success) return alert(result.message);
     await fetchData();
+  } catch (err) {
+    alert('상태 업데이트 중 오류가 발생했습니다.');
+    console.error(err);
   } finally {
     setLoading(false);
   }
