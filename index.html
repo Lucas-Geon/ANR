@@ -9,6 +9,7 @@
   body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #222; }
   .container { max-width: 1380px; margin: 0 auto; }
 
+  /* 데스크톱에서는 상단 고정 유지 */
   .sticky-top { position: sticky; top: 0; z-index: 100; background: #f0f2f5; padding-bottom: 10px; }
   .header { background: #fff; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   .badge { padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; }
@@ -83,12 +84,30 @@
   .person-chip { display: inline-flex; align-items: center; gap: 3px; background: #fff; border: 1px solid #ced4da; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
   .person-chip.confirmed { background: #ebfbee; border-color: #40c057; font-weight: bold; }
   .person-chip.night-chip { background: #f3f0ff; border-color: #9775fa; color: #5f3dc4; font-weight: bold; }
+
+  /* 📱 모바일 최적화 (상단 틀고정 해제 + 컴팩트 레이아웃) */
+  @media (max-width: 768px) {
+    body { padding: 10px; }
+    .sticky-top { position: static !important; } /* 상단 틀고정 해제 */
+    .month-card { scroll-margin-top: 12px; } /* 고정 헤더가 없으므로 스크롤 여백 축소 */
+    .header { padding: 12px 14px; }
+    .header h2 { font-size: 17px !important; }
+    .form-box { padding: 12px 14px; }
+    .form-inputs { width: 100%; }
+    .form-inputs select,
+    .form-inputs input,
+    .form-inputs button { width: 100% !important; }
+    .night-board { padding: 12px 14px; }
+    .night-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } /* 모바일 2열 배치로 세로 공간 절약 */
+    .week-status-bar { padding: 5px 8px 6px 8px; }
+    .part-boxes { justify-content: flex-start; }
+  }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="sticky-top">
+  <div class="sticky-top" id="topFormArea">
     <div class="header">
       <div>
         <h2 style="margin:0 0 6px 0; font-size:20px;">📅 2027년 장기휴가 & 🌙 나이트킵 신청 시스템</h2>
@@ -128,10 +147,8 @@
         <input type="text" id="empId" placeholder="사번 입력" style="width:115px;">
         <input type="text" id="name" placeholder="이름 입력" style="width:105px;">
 
-        <!-- 장기휴가 또는 나이트 오프주 선택 시 노출 -->
         <input type="text" id="selectedWeek" placeholder="달력에서 원하는 주 클릭" readonly style="background:#eef5ff; border-color:#0056b3; font-weight:bold; width:200px;">
 
-        <!-- 나이트킵 신청 시에만 노출 (희망 월 선택) -->
         <select id="targetMonth" style="display:none; background:#f3f0ff; border-color:#6f42c1; font-weight:bold;">
           <option value="">-- 희망 월 선택 --</option>
           <option value="1월">1월 나이트킵</option><option value="2월">2월 나이트킵</option>
@@ -151,8 +168,8 @@
   <!-- 월별 나이트킵 신청 & 추첨 현황 보드 -->
   <div class="night-board">
     <div class="night-board-title">
-      <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명 — 장기휴가 조정 후 추첨)</span>
-      <span style="font-size:12px; font-weight:normal; color:#666;">* 1차 신청 시 희망 월만 접수 → 당첨 확정 후 오프 주 선택</span>
+      <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명)</span>
+      <span style="font-size:12px; font-weight:normal; color:#666;">* 1차 희망 월 접수 → 추첨 확정 후 오프 주 선택</span>
     </div>
     <div id="nightGrid" class="night-grid"></div>
   </div>
@@ -219,7 +236,7 @@ function toggleFormMode() {
   } else if (type === 'NIGHT_WEEK') {
     weekInput.style.display = 'inline-block';
     monthSelect.style.display = 'none';
-    partSelect.style.display = 'none'; // 이미 확정된 파트 자동 매칭
+    partSelect.style.display = 'none';
     btn.innerText = '나이트 오프주 확정';
     btn.className = 'btn-night';
   } else {
@@ -269,7 +286,6 @@ async function fetchData() {
   }
 }
 
-// 월별 나이트킵 현황판 렌더링
 function renderNightBoard() {
   const grid = document.getElementById('nightGrid');
   grid.innerHTML = '';
@@ -278,7 +294,6 @@ function renderNightBoard() {
 
   for (let m = 1; m <= 12; m++) {
     const mStr = `${m}월`;
-    // week 필드에 '3월' 또는 '10주차 (3/8~3/12) [3월나이트]' 형태로 저장됨
     const mList = nightApps.filter(d => d.week === mStr || d.week.includes(`[${mStr}나이트]`));
     const p1 = mList.filter(d => d.part === '1동');
     const p2 = mList.filter(d => d.part === '2동');
@@ -313,7 +328,6 @@ function renderNightBoard() {
   }
 }
 
-// 1~12월 달력 렌더링 (장기휴가 + 주차를 선택한 나이트킵 당첨자 통합 표시)
 function renderCalendars() {
   const container = document.getElementById('monthsContainer');
   container.innerHTML = '';
@@ -350,7 +364,6 @@ function renderCalendars() {
       let p1 = [], p2 = [], isOver = false;
 
       if (isValidWeek) {
-        // 장기휴가 신청자 OR 주차를 선택한 나이트킵 확정자 모두 해당 주 인원으로 카운트
         const weekApps = appData.data.filter(d => d.status !== '탈락' && d.week.startsWith(weekInfo.label));
         p1 = weekApps.filter(d => d.part === '1동');
         p2 = weekApps.filter(d => d.part === '2동');
@@ -448,6 +461,11 @@ function selectWeek(label) {
   selectedWeekLabel = label;
   document.getElementById('selectedWeek').value = label;
   renderCalendars();
+
+  // 📱 모바일(틀고정 해제 상태)에서 주차 선택 시 상단 신청 폼으로 자동 스크롤 이동
+  if (window.innerWidth <= 768) {
+    document.getElementById('topFormArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 async function submitForm() {
