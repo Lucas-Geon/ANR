@@ -469,14 +469,18 @@ async function fetchData() {
     const roundBadge = document.getElementById('roundBadge');
     const round = String(appData.config.round);
 
+    // ★ 4번 요청: 진행 단계 제목 문구 수정
     if (round === 'NIGHT_WEEK') {
       roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간 (중복 선택 가능)';
       roundBadge.className = 'badge badge-night';
-    } else if (round === '2' || round === '3') {
-      roundBadge.innerText = round === '2' ? '2차 신청 기간 (장기+나이트 · 탈락자 재신청)' : '3차 신청 기간 (장기휴가 선착순 즉시 확정)';
+    } else if (round === '2') {
+      roundBadge.innerText = '2차 신청 기간 (장기+나이트, 추첨제)';
+      roundBadge.className = 'badge badge-round';
+    } else if (round === '3') {
+      roundBadge.innerText = '3차 상시 선착순 신청';
       roundBadge.className = 'badge badge-round';
     } else {
-      roundBadge.innerText = '1차 신청 기간 (장기휴가 + 나이트킵)';
+      roundBadge.innerText = '1차 신청 기간 (장기+나이트, 추첨제)';
       roundBadge.className = 'badge badge-round';
     }
 
@@ -615,7 +619,7 @@ async function toggleFlag(rowIdx) {
 
 async function runBatchAction(action) {
   const confirmMsg = action === 'BATCH_CONFIRM'
-    ? '정원 내 신청 인원과 경합 주차/월에서 붉은색으로 강조된 인원을 모두 [확정] 처리하시겠습니까?'
+    ? '정원 내 신청 인원과 경합 주차/월에서 붉은색으로 강조된 인원을 모두 강조 표시와 함께 [확정] 처리하시겠습니까?'
     : '확정되지 않고 강조되지 않은(미선정) 신청중 인원을 모두 [탈락(제외)] 처리하시겠습니까?\n(반드시 먼저 [경합 확정]을 완료한 후 실행해주세요.)';
 
   if (!confirm(confirmMsg)) return;
@@ -641,9 +645,10 @@ async function runBatchAction(action) {
 function openMyAppsModal() {
   document.getElementById('myAppsResult').innerHTML = '';
   const isOpen = Boolean(appData.config.isOpen);
+  // ★ 5번 요청: 전체공개 안내 문구에 '(삭제 시 관리자에게 연락바랍니다)' 추가
   document.getElementById('myAppsNotice').innerText = isOpen
-    ? '※ 현재 전체공개 기간이므로 조회만 가능하며 삭제는 불가합니다.'
-    : '※ 이름과 사번을 입력하면 신청 내역을 확인하고 취소(삭제)할 수 있습니다.';
+    ? '※ 현재 전체공개 기간이므로 조회만 가능하며 삭제는 불가합니다. (삭제 시 관리자에게 연락바랍니다)'
+    : '※ 이름과 사번을 입력하면 신청 내역을 확인하고 취소(삭제)할 수 있습니다. (이미 확정된 내역은 삭제 불가)';
   document.getElementById('myAppsModal').style.display = 'flex';
 }
 
@@ -678,9 +683,13 @@ async function searchMyApps() {
 
     resEl.innerHTML = result.apps.map(app => {
       const canDel = result.canDelete && app.status === '신청중';
+      let noDelReason = '삭제불가';
+      if (!result.canDelete) noDelReason = '전체공개 삭제불가';
+      else if (app.status === '확정') noDelReason = '확정건 삭제불가 (관리자 문의)';
+
       const delBtn = canDel
         ? `<button class="btn-danger" style="padding:6px 10px; font-size:12px;" onclick="cancelMyApp(${Number(app.rowIdx)})">신청 취소(삭제)</button>`
-        : `<span style="font-size:11px; color:#888;">${!result.canDelete ? '전체공개 삭제불가' : '삭제불가'}</span>`;
+        : `<span style="font-size:11px; color:#888;">${noDelReason}</span>`;
 
       return `<div class="my-app-item">
         <div class="my-app-info">
@@ -757,8 +766,17 @@ function renderNightBoard() {
     }
 
     const formatNightPart = (list, partName) => {
+      // ★ 1번 요청: 블라인드 상태라도 확정된 인원은 이름 표출, 미확정 인원은 인원수로 표기
       if (!isOpen && !isAdmin) {
-        return `<span class="${list.length > 1 ? 'over-text' : ''}">${list.length}/1명</span>`;
+        if (list.length === 0) return `<span class="">0/1명</span>`;
+        const confirmedList = list.filter(d => d.status === '확정');
+        const pendingCount = list.length - confirmedList.length;
+
+        const chips = confirmedList.map(item => buildPersonChipHtml(item, true)).join('');
+        const pendingTag = pendingCount > 0
+          ? `<span class="${list.length > 1 ? 'over-text' : ''}">(${list.length}/1명)</span>`
+          : '';
+        return `${chips}${pendingTag || `<span class="${list.length > 1 ? 'over-text' : ''}">${list.length}/1명</span>`}`;
       }
       if (list.length === 0) return '<span style="color:#aaa;">공석</span>';
       return renderChipsWithLimit(list, 'NIGHT', mStr, partName, true);
@@ -814,7 +832,6 @@ function renderCalendars() {
         p1 = weekApps.filter(d => d.part === '1동');
         p2 = weekApps.filter(d => d.part === '2동');
 
-        // ★ 장기휴가 정원(1동 2명, 2동 1명) 초과 여부는 오직 '장기휴가' 인원만으로 판정 (나이트킵은 중복 허용)
         const p1LeaveCount = p1.filter(d => d.type !== '나이트킵').length;
         const p2LeaveCount = p2.filter(d => d.type !== '나이트킵').length;
         isOver = (p1LeaveCount > 2 || p2LeaveCount > 1);
@@ -886,11 +903,24 @@ function renderCalendars() {
 
 function formatPartList(list, limit, weekLabel, partName) {
   if (!appData.config.isOpen && !isAdmin) {
-    // ★ 블라인드 모드일 때도 장기휴가 정원만 카운트 (나이트킵 인원은 별도 표기)
-    const leaveCount = list.filter(d => d.type !== '나이트킵').length;
-    const nightCount = list.filter(d => d.type === '나이트킵').length;
-    const nightTag = nightCount > 0 ? ` <span style="color:#6f42c1; font-weight:bold;">(+🌙${nightCount})</span>` : '';
-    return `<span class="${leaveCount > limit ? 'over-text' : ''}">${leaveCount}/${limit}명</span>${nightTag}`;
+    const leaveList = list.filter(d => d.type !== '나이트킵');
+    const nightList = list.filter(d => d.type === '나이트킵');
+
+    const leaveCount = leaveList.length;
+    const confirmedLeaves = leaveList.filter(d => d.status === '확정');
+    const confirmedNights = nightList.filter(d => d.status === '확정');
+
+    // ★ 1번 요청: 블라인드 상태(2차, 3차 등)에서도 이미 확정된 인원의 이름을 칩으로 표출
+    const confirmedChips = [...confirmedLeaves, ...confirmedNights]
+      .map(item => buildPersonChipHtml(item, false))
+      .join('');
+
+    const unconfirmedNightCount = nightList.length - confirmedNights.length;
+    const nightTag = unconfirmedNightCount > 0
+      ? ` <span style="color:#6f42c1; font-weight:bold;">(+🌙${unconfirmedNightCount})</span>`
+      : '';
+
+    return `${confirmedChips} <span class="${leaveCount > limit ? 'over-text' : ''}">${leaveCount}/${limit}명</span>${nightTag}`;
   }
   if (list.length === 0) return `<span style="color:#aaa;">공석</span>`;
 
