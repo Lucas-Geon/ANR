@@ -555,15 +555,16 @@ function buildPersonChipHtml(item, isNightBoard = false) {
   const displayName = esc(isAdmin ? (item.realName || item.name) : item.name);
   const isNight = item.type === '나이트킵';
   const isConfirmed = item.status === '확정';
-  const isFlagged = Boolean(item.flagged);
+  // ★ 이미 확정된 인원은 붉은색 강조 대신 초록색 확정 표시를 우선 적용
+  const isFlagged = Boolean(item.flagged) && !isConfirmed;
 
   const classes = ['person-chip'];
-  if (adjustMode) classes.push('clickable-name');
-  if (isNight) classes.push('night-chip');
-  else if (isConfirmed) classes.push('confirmed');
+  if (adjustMode && !isConfirmed) classes.push('clickable-name');
+  if (isConfirmed) classes.push('confirmed');
+  else if (isNight) classes.push('night-chip');
   if (isFlagged) classes.push('flagged-red');
 
-  const icon = isFlagged ? '🔴' : (isNight ? '🌙' : (isConfirmed ? '✅' : ''));
+  const icon = isConfirmed ? '✅' : (isFlagged ? '🔴' : (isNight ? '🌙' : ''));
   let suffix = '';
   if (isNightBoard) {
     suffix = item.week.includes('주차') ? `(${esc(item.week.split(' ')[0])})` : '';
