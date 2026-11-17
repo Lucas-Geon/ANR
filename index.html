@@ -624,6 +624,40 @@ function closeMoreModal() {
 
 async function toggleFlag(rowIdx) {
   if (!isAdjustMode()) return;
+
+  // ★ 프론트엔드 즉시 정원 초과 체크 및 경고 팝업
+  const target = appData.data.find(d => Number(d.rowIdx) === Number(rowIdx));
+  if (target && !target.flagged && target.status !== '확정') {
+    const isNight = target.type === '나이트킵';
+    const cap = isNight ? 1 : (target.part === '1동' ? 2 : 1);
+
+    let sameGroup = [];
+    if (isNight) {
+      const mMatch = target.week.match(/(\d{1,2}월)/);
+      const monthKey = mMatch ? mMatch[1] : target.week;
+      sameGroup = appData.data.filter(d =>
+        d.status !== '탈락' &&
+        d.type === '나이트킵' &&
+        d.part === target.part &&
+        (d.week === monthKey || d.week.includes(`[${monthKey}나이트]`))
+      );
+    } else {
+      const weekKey = target.week.split(' [')[0];
+      sameGroup = appData.data.filter(d =>
+        d.status !== '탈락' &&
+        (d.type || '장기휴가') === '장기휴가' &&
+        d.part === target.part &&
+        d.week.startsWith(weekKey)
+      );
+    }
+
+    const selectedCount = sameGroup.filter(d => d.status === '확정' || d.flagged).length;
+    if (selectedCount >= cap) {
+      alert(`⚠️ ${target.part} ${isNight ? '나이트킵' : '장기휴가'} 정원은 최대 ${cap}명입니다.\n이미 ${cap}명이 선택되어 있어 추가로 붉은색 표시를 할 수 없습니다.\n(다른 인원을 선택하려면 기존 붉은색 표시를 먼저 클릭해 해제해 주세요.)`);
+      return;
+    }
+  }
+
   setLoading(true, '조율 표시 변경 중...');
   try {
     const res = await fetch(SCRIPT_URL, {
