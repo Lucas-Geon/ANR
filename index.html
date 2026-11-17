@@ -305,6 +305,21 @@ const HOLIDAYS_2027 = {
   '12-25': '성탄절', '12-27': '대체휴일'
 };
 
+// ★ 3차 선착순 기간 여부 확인 헬퍼
+function isRound3() {
+  return String(appData.config && appData.config.round) === '3';
+}
+
+// ★ 전체 명단 공개 여부 (전체공개 모드이거나 3차 선착순 기간인 경우)
+function isPublicListMode() {
+  return Boolean(appData.config && appData.config.isOpen) || isRound3();
+}
+
+// ★ 1·2차 결과 조정(붉은색 강조 클릭) 모드 여부
+function isAdjustMode() {
+  return Boolean(appData.config && appData.config.isOpen) && !isRound3();
+}
+
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -385,7 +400,7 @@ function toggleFormMode() {
     weekInput.style.display = 'inline-block';
     monthSelect.style.display = 'none';
     partSelect.style.display = 'inline-block';
-    btn.innerText = '장기휴가 신청';
+    btn.innerText = isRound3() ? '장기휴가 즉시확정 신청' : '장기휴가 신청';
     btn.className = '';
   }
   renderNightBoard();
@@ -469,7 +484,6 @@ async function fetchData() {
     const roundBadge = document.getElementById('roundBadge');
     const round = String(appData.config.round);
 
-    // ★ 4번 요청: 진행 단계 제목 문구 수정
     if (round === 'NIGHT_WEEK') {
       roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간 (중복 선택 가능)';
       roundBadge.className = 'badge badge-night';
@@ -484,16 +498,23 @@ async function fetchData() {
       roundBadge.className = 'badge badge-round';
     }
 
-    const isOpen = Boolean(appData.config.isOpen);
-    document.getElementById('formInputsArea').style.display = isOpen ? 'none' : 'flex';
-    document.getElementById('openModeGuide').style.display = isOpen ? 'block' : 'none';
+    const adjustMode = isAdjustMode();
+    // ★ 3차 선착순 기간에는 블라인드/전체공개 설정과 무관하게 항상 신청 폼 표시
+    document.getElementById('formInputsArea').style.display = adjustMode ? 'none' : 'flex';
+    document.getElementById('openModeGuide').style.display = adjustMode ? 'block' : 'none';
 
     updateApplyTypeOptions(round);
     toggleFormMode();
 
     const modeBadge = document.getElementById('modeBadge');
-    modeBadge.innerText = isOpen ? '결과 공개 (조정·추첨 모드)' : '블라인드 접수중';
-    modeBadge.className = isOpen ? 'badge badge-open' : 'badge badge-blind';
+    if (isRound3()) {
+      modeBadge.innerText = '전체 공개 · 선착순 즉시확정';
+      modeBadge.className = 'badge badge-open';
+    } else {
+      const isOpen = Boolean(appData.config.isOpen);
+      modeBadge.innerText = isOpen ? '결과 공개 (조정·추첨 모드)' : '블라인드 접수중';
+      modeBadge.className = isOpen ? 'badge badge-open' : 'badge badge-blind';
+    }
 
     syncNoticeUI();
     showNoticePopupIfFirstVisit(appData.config.notice || DEFAULT_NOTICE);
@@ -513,10 +534,10 @@ async function fetchData() {
 }
 
 function renderChipsWithLimit(list, category, key, part, isNightBoard = false) {
-  const isOpen = Boolean(appData.config.isOpen);
+  const publicList = isPublicListMode();
   const MAX_SHOW = 5;
-  const visibleList = isOpen ? list.slice(0, MAX_SHOW) : list;
-  const hiddenCount = isOpen ? Math.max(0, list.length - MAX_SHOW) : 0;
+  const visibleList = publicList ? list.slice(0, MAX_SHOW) : list;
+  const hiddenCount = publicList ? Math.max(0, list.length - MAX_SHOW) : 0;
 
   let html = visibleList.map(item => buildPersonChipHtml(item, isNightBoard)).join('');
 
@@ -527,14 +548,14 @@ function renderChipsWithLimit(list, category, key, part, isNightBoard = false) {
 }
 
 function buildPersonChipHtml(item, isNightBoard = false) {
-  const isOpen = Boolean(appData.config.isOpen);
+  const adjustMode = isAdjustMode();
   const displayName = esc(isAdmin ? (item.realName || item.name) : item.name);
   const isNight = item.type === '나이트킵';
   const isConfirmed = item.status === '확정';
   const isFlagged = Boolean(item.flagged);
 
   const classes = ['person-chip'];
-  if (isOpen) classes.push('clickable-name');
+  if (adjustMode) classes.push('clickable-name');
   if (isNight) classes.push('night-chip');
   else if (isConfirmed) classes.push('confirmed');
   if (isFlagged) classes.push('flagged-red');
@@ -547,7 +568,7 @@ function buildPersonChipHtml(item, isNightBoard = false) {
     suffix = isNight ? '(나이트)' : '';
   }
 
-  const clickAttr = isOpen ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
+  const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
 
   let adminBtns = '';
   if (isAdmin) {
@@ -598,7 +619,7 @@ function closeMoreModal() {
 }
 
 async function toggleFlag(rowIdx) {
-  if (!appData.config.isOpen) return;
+  if (!isAdjustMode()) return;
   setLoading(true, '조율 표시 변경 중...');
   try {
     const res = await fetch(SCRIPT_URL, {
@@ -645,7 +666,6 @@ async function runBatchAction(action) {
 function openMyAppsModal() {
   document.getElementById('myAppsResult').innerHTML = '';
   const isOpen = Boolean(appData.config.isOpen);
-  // ★ 5번 요청: 전체공개 안내 문구에 '(삭제 시 관리자에게 연락바랍니다)' 추가
   document.getElementById('myAppsNotice').innerText = isOpen
     ? '※ 현재 전체공개 기간이므로 조회만 가능하며 삭제는 불가합니다. \n(변경 희망 시 관리자에게 연락바랍니다)'
     : '※ 이름과 사번을 입력하면 신청 내역을 확인하고 취소(삭제)할 수 있습니다. (확정 내역 삭제 시 관리자에게 문의)';
@@ -740,6 +760,7 @@ function renderNightBoard() {
   const nightApps = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락');
   const round = String(appData.config.round || '1');
   const isOpen = Boolean(appData.config.isOpen);
+  const publicList = isPublicListMode();
   const canSelectNight = !isOpen && (round === '1' || round === '2');
   const currentApplyType = document.getElementById('applyType').value;
   const currentSelectedMonth = document.getElementById('targetMonth').value;
@@ -758,7 +779,7 @@ function renderNightBoard() {
       'night-month-card',
       canSelectNight ? 'selectable' : '',
       isSelected ? 'selected' : '',
-      (isOver && isOpen) ? 'over' : ''
+      (isOver && isAdjustMode()) ? 'over' : ''
     ].join(' ');
 
     if (canSelectNight) {
@@ -766,9 +787,9 @@ function renderNightBoard() {
     }
 
     const formatNightPart = (list, partName) => {
-      // ★ 1번 요청: 블라인드 상태라도 확정된 인원은 이름 표출, 미확정 인원은 인원수로 표기
-      if (!isOpen && !isAdmin) {
-        if (list.length === 0) return `<span class="">0/1명</span>`;
+      // ★ 전체공개 또는 3차 선착순 기간에는 모든 신청자 이름 표출
+      if (!publicList && !isAdmin) {
+        if (list.length === 0) return `<span>0/1명</span>`;
         const confirmedList = list.filter(d => d.status === '확정');
         const pendingCount = list.length - confirmedList.length;
 
@@ -783,7 +804,7 @@ function renderNightBoard() {
     };
 
     card.innerHTML = `
-      <div class="night-m-header">${m}월 나이트킵 ${isOver && isOpen ? '🚨추첨' : ''}</div>
+      <div class="night-m-header">${m}월 나이트킵 ${isOver && isAdjustMode() ? '🚨추첨' : ''}</div>
       <div class="night-row"><strong>1동(1):</strong> ${formatNightPart(p1, '1동')}</div>
       <div class="night-row"><strong>2동(1):</strong> ${formatNightPart(p2, '2동')}</div>
     `;
@@ -795,7 +816,7 @@ function renderCalendars() {
   const container = document.getElementById('monthsContainer');
   container.innerHTML = '';
   const dows = ['일', '월', '화', '수', '목', '금', '토'];
-  const isOpen = Boolean(appData.config.isOpen);
+  const adjustMode = isAdjustMode();
 
   for (let m = 0; m < 12; m++) {
     const monthCard = document.createElement('div');
@@ -837,15 +858,17 @@ function renderCalendars() {
         isOver = (p1LeaveCount > 2 || p2LeaveCount > 1);
       }
 
-      const isSelected = isValidWeek && !isOpen && (selectedWeekLabel === weekInfo.label);
+      // ★ 3차 기간에는 전체공개가 켜져 있어도 달력 주차 클릭 선택 허용
+      const canClickWeek = isValidWeek && !adjustMode;
+      const isSelected = canClickWeek && (selectedWeekLabel === weekInfo.label);
       const blockClass = [
         'week-block',
-        (isValidWeek && !isOpen) ? 'selectable' : (isValidWeek ? '' : 'disabled-week'),
+        canClickWeek ? 'selectable' : (isValidWeek ? '' : 'disabled-week'),
         isSelected ? 'selected' : '',
-        (isValidWeek && isOver && isOpen) ? 'over-limit' : ''
+        (isValidWeek && isOver && adjustMode) ? 'over-limit' : ''
       ].join(' ');
 
-      const clickAttr = (isValidWeek && !isOpen) ? `onclick="selectWeek('${weekInfo.label}')"` : '';
+      const clickAttr = canClickWeek ? `onclick="selectWeek('${weekInfo.label}')"` : '';
 
       const daysHtml = weekDays.map((dt, idx) => {
         const isCurrentMonth = dt.getMonth() === m;
@@ -869,7 +892,7 @@ function renderCalendars() {
       if (isValidWeek) {
         statusBarHtml = `
           <div class="week-status-bar">
-            <span class="week-tag">${weekInfo.weekNum}주차 (${weekInfo.mon.getMonth()+1}/${weekInfo.mon.getDate()}~${weekInfo.fri.getMonth()+1}/${weekInfo.fri.getDate()}) ${isOver && isOpen ? '🚨경합' : ''}</span>
+            <span class="week-tag">${weekInfo.weekNum}주차 (${weekInfo.mon.getMonth()+1}/${weekInfo.mon.getDate()}~${weekInfo.fri.getMonth()+1}/${weekInfo.fri.getDate()}) ${isOver && adjustMode ? '🚨경합' : ''}</span>
             <div class="part-boxes">
               <div class="part-box">
                 <span class="part-title">1동(2):</span>
@@ -902,7 +925,8 @@ function renderCalendars() {
 }
 
 function formatPartList(list, limit, weekLabel, partName) {
-  if (!appData.config.isOpen && !isAdmin) {
+  // ★ 전체공개 또는 3차 선착순 기간에는 모든 신청자/확정자 이름 표출
+  if (!isPublicListMode() && !isAdmin) {
     const leaveList = list.filter(d => d.type !== '나이트킵');
     const nightList = list.filter(d => d.type === '나이트킵');
 
@@ -910,7 +934,6 @@ function formatPartList(list, limit, weekLabel, partName) {
     const confirmedLeaves = leaveList.filter(d => d.status === '확정');
     const confirmedNights = nightList.filter(d => d.status === '확정');
 
-    // ★ 1번 요청: 블라인드 상태(2차, 3차 등)에서도 이미 확정된 인원의 이름을 칩으로 표출
     const confirmedChips = [...confirmedLeaves, ...confirmedNights]
       .map(item => buildPersonChipHtml(item, false))
       .join('');
@@ -928,7 +951,7 @@ function formatPartList(list, limit, weekLabel, partName) {
 }
 
 function selectWeek(label) {
-  if (appData.config.isOpen) return;
+  if (isAdjustMode()) return;
   selectedWeekLabel = label;
   document.getElementById('selectedWeek').value = label;
   renderCalendars();
