@@ -13,6 +13,7 @@
   .sticky-top { position: sticky; top: 0; z-index: 100; background: #f0f2f5; padding-bottom: 10px; }
   .header { background: #fff; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 10px; }
   .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .header-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .badge { padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; }
   .badge-round { background: #0056b3; color: #fff; }
   .badge-night { background: #6f42c1; color: #fff; }
@@ -46,8 +47,11 @@
   /* 나이트킵 월별 신청 현황 보드 */
   .night-board { background: #fff; border: 2px solid #d0bfff; border-radius: 10px; padding: 15px 20px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(111, 66, 193, 0.08); }
   .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-  .night-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-  .night-month-card { background: #f8f5ff; border: 1px solid #e5dbff; border-radius: 8px; padding: 10px; font-size: 13px; }
+  .night-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .night-month-card { background: #f8f5ff; border: 1px solid #e5dbff; border-radius: 8px; padding: 10px; font-size: 13px; transition: 0.15s; }
+  .night-month-card.selectable { cursor: pointer; }
+  .night-month-card.selectable:hover { border-color: #7950f2; background: #f3f0ff; transform: translateY(-1px); }
+  .night-month-card.selected { border: 2px solid #6f42c1; background: #ede7ff; box-shadow: 0 2px 6px rgba(111, 66, 193, 0.2); }
   .night-month-card.over { border-color: #dc3545; background: #fff5f5; }
   .night-m-header { font-weight: bold; color: #3b287c; border-bottom: 1px solid #e5dbff; padding-bottom: 4px; margin-bottom: 6px; }
   .night-row { margin-top: 4px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
@@ -88,20 +92,36 @@
   .part-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 3px 7px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
   .part-title { font-weight: bold; color: #333; }
   .over-text { color: #dc3545; font-weight: bold; }
-  .person-chip { display: inline-flex; align-items: center; gap: 3px; background: #fff; border: 1px solid #ced4da; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+  /* 이름 칩 스타일 + 전체공개 클릭 강조(붉은색 계열) */
+  .person-chip { display: inline-flex; align-items: center; gap: 3px; background: #fff; border: 1px solid #ced4da; padding: 2px 6px; border-radius: 4px; font-size: 12px; transition: 0.15s; }
+  .person-chip.clickable-name { cursor: pointer; }
+  .person-chip.clickable-name:hover { border-color: #fa5252; background: #fff5f5; }
   .person-chip.confirmed { background: #ebfbee; border-color: #40c057; font-weight: bold; }
   .person-chip.night-chip { background: #f3f0ff; border-color: #9775fa; color: #5f3dc4; font-weight: bold; }
+  /* ★ 조율 클릭 시 붉은색 강조 (confirmed/night-chip보다 우선 적용) */
+  .person-chip.flagged-red { background: #ffe3e3 !important; border: 1.5px solid #e03131 !important; color: #c92a2a !important; font-weight: bold !important; box-shadow: 0 0 0 1px rgba(224,49,49,0.2); }
 
-  /* 공지사항 1회 팝업 모달 */
+  /* 더보기 버튼 */
+  .more-chip { display: inline-flex; align-items: center; background: #343a40; color: #fff; border: none; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
+  .more-chip:hover { background: #1c1f23; }
+
+  /* 모달 공통 스타일 */
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 9999; display: none; justify-content: center; align-items: center; padding: 20px; }
-  .modal-card { background: #fff; width: 100%; max-width: 420px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden; animation: popIn 0.2s ease-out; }
+  .modal-card { background: #fff; width: 100%; max-width: 440px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden; animation: popIn 0.2s ease-out; }
   @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .modal-head { background: #2c3e50; color: #fff; padding: 14px 18px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 6px; }
-  .modal-body { padding: 18px; font-size: 14.5px; line-height: 1.65; color: #222; white-space: pre-wrap; background: #fffdf5; }
+  .modal-head { background: #2c3e50; color: #fff; padding: 14px 18px; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  .modal-close-x { background: transparent; color: #fff; font-size: 18px; padding: 0 4px; cursor: pointer; }
+  .modal-body { padding: 18px; font-size: 14.5px; line-height: 1.65; color: #222; max-height: 65vh; overflow-y: auto; }
   .modal-foot { padding: 12px 18px; background: #f8f9fa; text-align: right; border-top: 1px solid #eee; }
   .modal-foot button { width: 100%; padding: 10px; font-size: 15px; background: #0056b3; }
 
-  /* 모바일 최적화 (상단 틀고정 해제) */
+  /* 내 신청내역 조회 카드 */
+  .my-app-item { border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .my-app-info { font-size: 13.5px; line-height: 1.5; }
+  .status-pill { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #e9ecef; }
+
+  /* 모바일 최적화 */
   @media (max-width: 768px) {
     body { padding: 10px; }
     .sticky-top { position: static !important; }
@@ -122,13 +142,54 @@
 </head>
 <body>
 
-<!-- 방문 시 1회 표출되는 공지사항 팝업 -->
+<!-- 1. 방문 시 1회 표출되는 공지사항 팝업 -->
 <div id="noticeModal" class="modal-backdrop">
   <div class="modal-card">
-    <div class="modal-head">📢 공지사항 안내</div>
-    <div id="modalNoticeText" class="modal-body"></div>
+    <div class="modal-head"><span>📢 공지사항 안내</span></div>
+    <div id="modalNoticeText" class="modal-body" style="white-space:pre-wrap; background:#fffdf5;"></div>
     <div class="modal-foot">
       <button onclick="closeNoticeModal()">확인했습니다</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 전체 명단 '더보기' 팝업 (전체공개 시 6번째 이후 확인 및 붉은색 강조 클릭 가능) -->
+<div id="moreModal" class="modal-backdrop" onclick="if(event.target===this) closeMoreModal()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span id="moreModalTitle">전체 신청자 명단</span>
+      <button class="modal-close-x" onclick="closeMoreModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12.5px; color:#666; margin-bottom:10px;">
+        * 이름을 클릭하면 <strong style="color:#c92a2a;">붉은색(조율/양보 표시)</strong>으로 강조되어 관리자가 확인할 수 있습니다.
+      </div>
+      <div id="moreModalList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="closeMoreModal()" style="background:#6c757d;">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 본인 신청내역확인 & 삭제 팝업 -->
+<div id="myAppsModal" class="modal-backdrop" onclick="if(event.target===this) closeMyAppsModal()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>🔍 내 신청내역 확인</span>
+      <button class="modal-close-x" onclick="closeMyAppsModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:6px; margin-bottom:12px;">
+        <input type="text" id="checkName" placeholder="이름 입력" style="flex:1; width:100%;">
+        <input type="text" id="checkEmpId" placeholder="사번 입력" style="flex:1; width:100%;">
+        <button onclick="searchMyApps()" style="white-space:nowrap;">조회</button>
+      </div>
+      <div id="myAppsNotice" style="font-size:12px; color:#666; margin-bottom:10px;"></div>
+      <div id="myAppsResult"></div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="closeMyAppsModal()" style="background:#6c757d;">닫기</button>
     </div>
   </div>
 </div>
@@ -143,8 +204,9 @@
           <span id="modeBadge" class="badge badge-blind">상태 확인중...</span>
           <span id="loadingMsg" class="loading-overlay"></span>
         </div>
-        <div>
-          <button onclick="fetchData()" style="background:#17a2b8; margin-right:5px;">새로고침</button>
+        <div class="header-btns">
+          <button onclick="openMyAppsModal()" style="background:#495057;">신청내역확인</button>
+          <button onclick="fetchData()" style="background:#17a2b8;">새로고침</button>
           <button id="adminToggleBtn" onclick="toggleAdminMode()" style="background:#6c757d;">관리자 모드</button>
         </div>
       </div>
@@ -170,13 +232,13 @@
       <button onclick="adminAction('SET_ROUND', '3')" style="background:#e8590c;">④ 3차 신청 (선착순)</button>
     </div>
 
-    <!-- 통합 신청 폼 -->
+    <!-- 통합 신청 폼 (전체공개 시 입력창 자동 숨김) -->
     <div class="form-box">
-      <div class="form-inputs">
+      <div id="formInputsArea" class="form-inputs">
         <select id="applyType" onchange="toggleFormMode()" style="font-weight:bold; border-color:#0056b3;">
-          <option value="LEAVE">🏖️ 장기휴가 신청 (1순위)</option>
-          <option value="NIGHT_APPLY">🌙 나이트킵 신청 (희망 월)</option>
-          <option value="NIGHT_WEEK">🌙 나이트 당첨자 오프주 선택</option>
+          <option id="optLeave" value="LEAVE">🏖️ 장기휴가 신청 (1순위)</option>
+          <option id="optNightApply" value="NIGHT_APPLY">🌙 나이트킵 신청 (희망 월)</option>
+          <option id="optNightWeek" value="NIGHT_WEEK" style="display:none;">🌙 나이트 당첨자 오프주 선택</option>
         </select>
 
         <select id="part">
@@ -189,8 +251,8 @@
 
         <input type="text" id="selectedWeek" placeholder="달력에서 원하는 주 클릭" readonly style="background:#eef5ff; border-color:#0056b3; font-weight:bold; width:200px;">
 
-        <select id="targetMonth" style="display:none; background:#f3f0ff; border-color:#6f42c1; font-weight:bold;">
-          <option value="">-- 희망 월 선택 --</option>
+        <select id="targetMonth" onchange="renderNightBoard()" style="display:none; background:#f3f0ff; border-color:#6f42c1; font-weight:bold;">
+          <option value="">-- 희망 월 선택 (또는 아래 카드 클릭) --</option>
           <option value="1월">1월 나이트킵</option><option value="2월">2월 나이트킵</option>
           <option value="3월">3월 나이트킵</option><option value="4월">4월 나이트킵</option>
           <option value="5월">5월 나이트킵</option><option value="6월">6월 나이트킵</option>
@@ -201,6 +263,11 @@
 
         <button id="submitBtn" onclick="submitForm()">신청하기</button>
       </div>
+
+      <div id="openModeGuide" style="display:none; font-size:13.5px; color:#c92a2a; font-weight:bold;">
+        📢 현재 전체공개(조정) 기간입니다. 경합 주차의 본인 이름을 클릭하면 붉은색으로 강조되어 관리자가 확인할 수 있습니다.
+      </div>
+
       <div class="month-nav" id="monthNav"></div>
     </div>
   </div>
@@ -209,7 +276,7 @@
   <div class="night-board">
     <div class="night-board-title">
       <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명)</span>
-      <span style="font-size:12px; font-weight:normal; color:#666;">* 희망 월 접수(1·2차) → 추첨 확정 후 오프 주 선택</span>
+      <span style="font-size:12px; font-weight:normal; color:#666;">* 1·2차 신청 기간 중 아래 월 카드를 클릭하면 바로 선택됩니다</span>
     </div>
     <div id="nightGrid" class="night-grid"></div>
   </div>
@@ -219,9 +286,8 @@
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCelndaiO1XkmG3o4dfKyF4kGeRP0AHn-424HtsMt2p-8W4y42FXSkEb_f10MU9tk3/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjHtSy28K73WCFTHwcY3OrEaoADXt1mWErecx9KThrNzr8wWQc6OUpy4owW889vlE/exec';
 
-// 백엔드(Code.gs)의 DEFAULT_NOTICE와 동일하게 유지
 const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청기간에는 자유롭게 수정 가능\n3. 3차 신청 시 선착순으로 완료";
 
 let appData = { config: {}, data: [] };
@@ -229,8 +295,8 @@ let isAdmin = false;
 let adminPw = '';
 let selectedWeekLabel = '';
 let currentNoticeText = '';
+let activeMoreContext = null; // 더보기 팝업이 열려 있을 때 실시간 갱신용
 
-// 2027 공휴일 (※ 설·추석 등 변동 공휴일은 인사혁신처 고시로 최종 확인 권장)
 const HOLIDAYS_2027 = {
   '1-1': '신정', '2-5': '설연휴', '2-6': '설날', '2-7': '설연휴', '2-8': '대체휴일',
   '3-1': '삼일절', '5-5': '어린이날', '5-13': '부처님오신날', '6-6': '현충일',
@@ -239,7 +305,6 @@ const HOLIDAYS_2027 = {
   '12-25': '성탄절', '12-27': '대체휴일'
 };
 
-// HTML 이스케이프 (이름 등 사용자 입력을 innerHTML에 넣기 전에 반드시 통과)
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -273,6 +338,30 @@ function initMonthNav() {
   }
 }
 
+function updateApplyTypeOptions(round) {
+  const optLeave = document.getElementById('optLeave');
+  const optNightApply = document.getElementById('optNightApply');
+  const optNightWeek = document.getElementById('optNightWeek');
+  const select = document.getElementById('applyType');
+
+  if (round === 'NIGHT_WEEK') {
+    optLeave.style.display = 'none';
+    optNightApply.style.display = 'none';
+    optNightWeek.style.display = '';
+    select.value = 'NIGHT_WEEK';
+  } else if (round === '3') {
+    optLeave.style.display = '';
+    optNightApply.style.display = 'none';
+    optNightWeek.style.display = 'none';
+    select.value = 'LEAVE';
+  } else {
+    optLeave.style.display = '';
+    optNightApply.style.display = '';
+    optNightWeek.style.display = 'none';
+    if (select.value === 'NIGHT_WEEK') select.value = 'LEAVE';
+  }
+}
+
 function toggleFormMode() {
   const type = document.getElementById('applyType').value;
   const weekInput = document.getElementById('selectedWeek');
@@ -299,13 +388,30 @@ function toggleFormMode() {
     btn.innerText = '장기휴가 신청';
     btn.className = '';
   }
+  renderNightBoard();
+}
+
+function selectNightMonth(mStr) {
+  if (appData.config.isOpen) return;
+  const round = String(appData.config.round || '1');
+  if (round !== '1' && round !== '2') return;
+
+  const applyTypeSelect = document.getElementById('applyType');
+  applyTypeSelect.value = 'NIGHT_APPLY';
+  toggleFormMode();
+
+  document.getElementById('targetMonth').value = mStr;
+  renderNightBoard();
+
+  if (window.innerWidth <= 768) {
+    document.getElementById('topFormArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function setLoading(isLoading, text = '동기화 중...') {
   document.getElementById('loadingMsg').innerText = isLoading ? text : '';
 }
 
-// 공지사항 팝업 (방문 시 1회, 내용이 바뀌면 다시 1회)
 function safeStorageGet(key) { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
 function safeStorageSet(key, val) { try { sessionStorage.setItem(key, val); } catch (e) {} }
 
@@ -348,14 +454,12 @@ function setAdminUI(on) {
 async function fetchData() {
   setLoading(true);
   try {
-    // 관리자 모드일 때만 비밀번호를 함께 보내 이름·사번 원문을 받아옴
     const url = (isAdmin && adminPw) ? `${SCRIPT_URL}?adminPw=${encodeURIComponent(adminPw)}` : SCRIPT_URL;
     const res = await fetch(url);
     const json = await res.json();
     if (!json || !json.config) throw new Error((json && json.message) || '응답 형식 오류');
     appData = json;
 
-    // 관리자 인증 실패 시 관리자 모드 해제
     if (isAdmin && !appData.adminOk) {
       alert('관리자 비밀번호가 일치하지 않거나 인증이 차단되었습니다. 관리자 모드를 해제합니다.');
       setAdminUI(false);
@@ -363,37 +467,240 @@ async function fetchData() {
     }
 
     const roundBadge = document.getElementById('roundBadge');
-    const applyTypeSelect = document.getElementById('applyType');
     const round = String(appData.config.round);
 
     if (round === 'NIGHT_WEEK') {
       roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간';
       roundBadge.className = 'badge badge-night';
-      applyTypeSelect.value = 'NIGHT_WEEK';
     } else if (round === '2' || round === '3') {
-      roundBadge.innerText = round === '2' ? '2차 신청 기간 (장기+나이트 · 1차 탈락자 재신청·경합)' : '3차 신청 기간 (장기휴가 선착순 즉시 확정)';
+      roundBadge.innerText = round === '2' ? '2차 신청 기간 (장기+나이트 · 탈락자 재신청)' : '3차 신청 기간 (장기휴가 선착순 즉시 확정)';
       roundBadge.className = 'badge badge-round';
-      const curType = applyTypeSelect.value;
-      // 2차: 장기/나이트 신청 가능, 3차: 장기휴가만
-      if (round === '3' ? curType !== 'LEAVE' : curType === 'NIGHT_WEEK') applyTypeSelect.value = 'LEAVE';
     } else {
       roundBadge.innerText = '1차 신청 기간 (장기휴가 + 나이트킵)';
       roundBadge.className = 'badge badge-round';
-      if (applyTypeSelect.value === 'NIGHT_WEEK') applyTypeSelect.value = 'LEAVE';
     }
+
+    // ★ 전체공개 시 신청 입력창 숨김 / 블라인드 접수 시 표시
+    const isOpen = Boolean(appData.config.isOpen);
+    document.getElementById('formInputsArea').style.display = isOpen ? 'none' : 'flex';
+    document.getElementById('openModeGuide').style.display = isOpen ? 'block' : 'none';
+
+    updateApplyTypeOptions(round);
     toggleFormMode();
 
     const modeBadge = document.getElementById('modeBadge');
-    modeBadge.innerText = appData.config.isOpen ? '결과 공개 (조정·추첨 모드)' : '블라인드 접수중';
-    modeBadge.className = appData.config.isOpen ? 'badge badge-open' : 'badge badge-blind';
+    modeBadge.innerText = isOpen ? '결과 공개 (조정·추첨 모드)' : '블라인드 접수중';
+    modeBadge.className = isOpen ? 'badge badge-open' : 'badge badge-blind';
 
     syncNoticeUI();
     showNoticePopupIfFirstVisit(appData.config.notice || DEFAULT_NOTICE);
 
     renderNightBoard();
     renderCalendars();
+
+    // 더보기 팝업이 열려 있다면 최신 상태로 갱신
+    if (activeMoreContext) {
+      openMoreModal(activeMoreContext.category, activeMoreContext.key, activeMoreContext.part);
+    }
   } catch (err) {
     alert('데이터를 불러오는 중 오류가 발생했습니다.\n' + (err && err.message ? err.message : ''));
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ★ 공통 이름 칩 렌더링 (최대 5명 표출 + 6번째부터 '더보기' 버튼)
+function renderChipsWithLimit(list, category, key, part, isNightBoard = false) {
+  const isOpen = Boolean(appData.config.isOpen);
+  const MAX_SHOW = 5;
+  const visibleList = isOpen ? list.slice(0, MAX_SHOW) : list;
+  const hiddenCount = isOpen ? Math.max(0, list.length - MAX_SHOW) : 0;
+
+  let html = visibleList.map(item => buildPersonChipHtml(item, isNightBoard)).join('');
+
+  if (hiddenCount > 0) {
+    html += `<button class="more-chip" onclick="event.stopPropagation(); openMoreModal('${esc(category)}', '${esc(key)}', '${esc(part)}')">+${hiddenCount}명 더보기</button>`;
+  }
+  return html;
+}
+
+function buildPersonChipHtml(item, isNightBoard = false, inModal = false) {
+  const isOpen = Boolean(appData.config.isOpen);
+  const displayName = esc(isAdmin ? (item.realName || item.name) : item.name);
+  const isNight = item.type === '나이트킵';
+  const isConfirmed = item.status === '확정';
+  const isFlagged = Boolean(item.flagged);
+
+  const classes = ['person-chip'];
+  if (isOpen) classes.push('clickable-name');
+  if (isNight) classes.push('night-chip');
+  else if (isConfirmed) classes.push('confirmed');
+  if (isFlagged) classes.push('flagged-red');
+
+  const icon = isFlagged ? '🔴' : (isNight ? '🌙' : (isConfirmed ? '✅' : ''));
+  let suffix = '';
+  if (isNightBoard) {
+    suffix = item.week.includes('주차') ? `(${esc(item.week.split(' ')[0])})` : '';
+  } else {
+    suffix = isNight ? '(나이트)' : '';
+  }
+
+  // 전체공개 시 이름 클릭 -> 붉은색 조율 강조 토글
+  const clickAttr = isOpen ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 조율 강조 표시/해제"` : '';
+
+  // 관리자 버튼 (나이트 보드에서는 '당첨/제외', 달력에서는 장기휴가 대상 '확정/제외')
+  let adminBtns = '';
+  if (isAdmin) {
+    if (isNightBoard) {
+      adminBtns = `
+        <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">당첨</button>
+        <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
+      `;
+    } else if (!isNight) {
+      adminBtns = `
+        <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">확정</button>
+        <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
+      `;
+    }
+  }
+
+  return `<span class="${classes.join(' ')}" ${clickAttr}>${icon}${displayName}${suffix}${adminBtns}</span>`;
+}
+
+// ★ '더보기' 전체 명단 팝업 열기
+function openMoreModal(category, key, part) {
+  activeMoreContext = { category, key, part };
+  let fullList = [];
+  let title = '';
+
+  if (category === 'LEAVE') {
+    fullList = appData.data.filter(d => d.status !== '탈락' && d.week.startsWith(key) && d.part === part);
+    title = `📋 ${key} - ${part} 전체 신청자 (${fullList.length}명)`;
+  } else {
+    fullList = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락' && (d.week === key || d.week.includes(`[${key}나이트]`)) && d.part === part);
+    title = `🌙 ${key} 나이트킵 - ${part} 전체 신청자 (${fullList.length}명)`;
+  }
+
+  document.getElementById('moreModalTitle').innerText = title;
+  const listEl = document.getElementById('moreModalList');
+  listEl.innerHTML = fullList.map((item, idx) => {
+    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border:1px solid #eee; border-radius:6px; background:#fafafa;">
+      <span style="font-weight:bold; color:#666; width:28px;">${idx + 1}.</span>
+      <div style="flex:1;">${buildPersonChipHtml(item, category === 'NIGHT', true)}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('moreModal').style.display = 'flex';
+}
+
+function closeMoreModal() {
+  activeMoreContext = null;
+  document.getElementById('moreModal').style.display = 'none';
+}
+
+// ★ 전체공개 시 이름 클릭 -> 붉은색 강조 상태 서버 반영
+async function toggleFlag(rowIdx) {
+  if (!appData.config.isOpen) return;
+  setLoading(true, '조율 표시 변경 중...');
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'TOGGLE_FLAG', rowIdx })
+    });
+    const result = await res.json();
+    if (!result.success) return alert(result.message);
+    await fetchData();
+  } catch (err) {
+    alert('처리 중 오류가 발생했습니다.');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ★ 신청내역확인 모달 열기 / 조회 / 삭제
+function openMyAppsModal() {
+  document.getElementById('myAppsResult').innerHTML = '';
+  const isOpen = Boolean(appData.config.isOpen);
+  document.getElementById('myAppsNotice').innerText = isOpen
+    ? '※ 현재 전체공개 기간이므로 조회만 가능하며 삭제는 불가합니다.'
+    : '※ 이름과 사번을 입력하면 신청 내역을 확인하고 취소(삭제)할 수 있습니다.';
+  document.getElementById('myAppsModal').style.display = 'flex';
+}
+
+function closeMyAppsModal() {
+  document.getElementById('myAppsModal').style.display = 'none';
+}
+
+async function searchMyApps() {
+  const name = document.getElementById('checkName').value.trim();
+  const empId = document.getElementById('checkEmpId').value.trim();
+  if (!name || !empId) return alert('이름과 사번을 모두 입력해주세요.');
+
+  const resEl = document.getElementById('myAppsResult');
+  resEl.innerHTML = '<div style="text-align:center; color:#666; padding:10px;">조회 중...</div>';
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'CHECK_MY_APPS', name, empId })
+    });
+    const result = await res.json();
+    if (!result.success) {
+      resEl.innerHTML = '';
+      return alert(result.message);
+    }
+
+    if (!result.apps || result.apps.length === 0) {
+      resEl.innerHTML = '<div style="text-align:center; color:#888; padding:15px;">일치하는 신청 내역이 없습니다.</div>';
+      return;
+    }
+
+    resEl.innerHTML = result.apps.map(app => {
+      const canDel = result.canDelete && app.status === '신청중';
+      const delBtn = canDel
+        ? `<button class="btn-danger" style="padding:6px 10px; font-size:12px;" onclick="cancelMyApp(${Number(app.rowIdx)})">신청 취소(삭제)</button>`
+        : `<span style="font-size:11px; color:#888;">${!result.canDelete ? '전체공개 삭제불가' : '삭제불가'}</span>`;
+
+      return `<div class="my-app-item">
+        <div class="my-app-info">
+          <div><strong>[${esc(app.type)}]</strong> ${esc(app.part)} · ${esc(app.round)}차</div>
+          <div style="color:#0056b3; font-weight:bold;">${esc(app.target)}</div>
+          <div>상태: <span class="status-pill">${esc(app.status)}</span></div>
+        </div>
+        <div>${delBtn}</div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    resEl.innerHTML = '';
+    alert('조회 중 오류가 발생했습니다.');
+    console.error(err);
+  }
+}
+
+async function cancelMyApp(rowIdx) {
+  if (!confirm('해당 신청 내역을 삭제하시겠습니까?\n삭제 후 원하시는 일정으로 다시 신청하실 수 있습니다.')) return;
+  const name = document.getElementById('checkName').value.trim();
+  const empId = document.getElementById('checkEmpId').value.trim();
+
+  setLoading(true, '신청 취소 중...');
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'CANCEL_MY_APP', name, empId, rowIdx })
+    });
+    const result = await res.json();
+    alert(result.message);
+    if (result.success) {
+      await fetchData();
+      await searchMyApps();
+    }
+  } catch (err) {
+    alert('삭제 처리 중 오류가 발생했습니다.');
     console.error(err);
   } finally {
     setLoading(false);
@@ -405,6 +712,11 @@ function renderNightBoard() {
   grid.innerHTML = '';
 
   const nightApps = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락');
+  const round = String(appData.config.round || '1');
+  const isOpen = Boolean(appData.config.isOpen);
+  const canSelectNight = !isOpen && (round === '1' || round === '2');
+  const currentApplyType = document.getElementById('applyType').value;
+  const currentSelectedMonth = document.getElementById('targetMonth').value;
 
   for (let m = 1; m <= 12; m++) {
     const mStr = `${m}월`;
@@ -413,30 +725,32 @@ function renderNightBoard() {
     const p2 = mList.filter(d => d.part === '2동');
 
     const isOver = (p1.length > 1 || p2.length > 1);
-    const card = document.createElement('div');
-    card.className = `night-month-card ${isOver && appData.config.isOpen ? 'over' : ''}`;
+    const isSelected = (canSelectNight && currentApplyType === 'NIGHT_APPLY' && currentSelectedMonth === mStr);
 
-    const formatNightPart = (list) => {
-      if (!appData.config.isOpen && !isAdmin) {
+    const card = document.createElement('div');
+    card.className = [
+      'night-month-card',
+      canSelectNight ? 'selectable' : '',
+      isSelected ? 'selected' : '',
+      (isOver && isOpen) ? 'over' : ''
+    ].join(' ');
+
+    if (canSelectNight) {
+      card.onclick = () => selectNightMonth(mStr);
+    }
+
+    const formatNightPart = (list, partName) => {
+      if (!isOpen && !isAdmin) {
         return `<span class="${list.length > 1 ? 'over-text' : ''}">${list.length}/1명</span>`;
       }
       if (list.length === 0) return '<span style="color:#aaa;">공석</span>';
-      return list.map(item => {
-        const dName = esc(isAdmin ? (item.realName || item.name) : item.name);
-        const isConf = item.status === '확정';
-        const weekChosen = item.week.includes('주차') ? `(${esc(item.week.split(' ')[0])})` : '';
-        const btns = isAdmin ? `
-          <button class="btn-success" onclick="updateStatus(${Number(item.rowIdx)}, '확정')">당첨</button>
-          <button class="btn-danger" onclick="updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
-        ` : '';
-        return `<span class="person-chip ${isConf ? 'night-chip' : ''}">${isConf ? '🌙' : ''}${dName}${weekChosen}${btns}</span>`;
-      }).join('');
+      return renderChipsWithLimit(list, 'NIGHT', mStr, partName, true);
     };
 
     card.innerHTML = `
-      <div class="night-m-header">${m}월 나이트킵 ${isOver && appData.config.isOpen ? '🚨추첨' : ''}</div>
-      <div class="night-row"><strong>1동(1):</strong> ${formatNightPart(p1)}</div>
-      <div class="night-row"><strong>2동(1):</strong> ${formatNightPart(p2)}</div>
+      <div class="night-m-header">${m}월 나이트킵 ${isOver && isOpen ? '🚨추첨' : ''}</div>
+      <div class="night-row"><strong>1동(1):</strong> ${formatNightPart(p1, '1동')}</div>
+      <div class="night-row"><strong>2동(1):</strong> ${formatNightPart(p2, '2동')}</div>
     `;
     grid.appendChild(card);
   }
@@ -446,6 +760,7 @@ function renderCalendars() {
   const container = document.getElementById('monthsContainer');
   container.innerHTML = '';
   const dows = ['일', '월', '화', '수', '목', '금', '토'];
+  const isOpen = Boolean(appData.config.isOpen);
 
   for (let m = 0; m < 12; m++) {
     const monthCard = document.createElement('div');
@@ -484,15 +799,15 @@ function renderCalendars() {
         isOver = (p1.length > 2 || p2.length > 1);
       }
 
-      const isSelected = isValidWeek && (selectedWeekLabel === weekInfo.label);
+      const isSelected = isValidWeek && !isOpen && (selectedWeekLabel === weekInfo.label);
       const blockClass = [
         'week-block',
-        isValidWeek ? 'selectable' : 'disabled-week',
+        (isValidWeek && !isOpen) ? 'selectable' : (isValidWeek ? '' : 'disabled-week'),
         isSelected ? 'selected' : '',
-        (isValidWeek && isOver && appData.config.isOpen) ? 'over-limit' : ''
+        (isValidWeek && isOver && isOpen) ? 'over-limit' : ''
       ].join(' ');
 
-      const clickAttr = isValidWeek ? `onclick="selectWeek('${weekInfo.label}')"` : '';
+      const clickAttr = (isValidWeek && !isOpen) ? `onclick="selectWeek('${weekInfo.label}')"` : '';
 
       const daysHtml = weekDays.map((dt, idx) => {
         const isCurrentMonth = dt.getMonth() === m;
@@ -516,15 +831,15 @@ function renderCalendars() {
       if (isValidWeek) {
         statusBarHtml = `
           <div class="week-status-bar">
-            <span class="week-tag">${weekInfo.weekNum}주차 (${weekInfo.mon.getMonth()+1}/${weekInfo.mon.getDate()}~${weekInfo.fri.getMonth()+1}/${weekInfo.fri.getDate()}) ${isOver && appData.config.isOpen ? '🚨경합' : ''}</span>
+            <span class="week-tag">${weekInfo.weekNum}주차 (${weekInfo.mon.getMonth()+1}/${weekInfo.mon.getDate()}~${weekInfo.fri.getMonth()+1}/${weekInfo.fri.getDate()}) ${isOver && isOpen ? '🚨경합' : ''}</span>
             <div class="part-boxes">
               <div class="part-box">
                 <span class="part-title">1동(2):</span>
-                ${formatPartList(p1, 2)}
+                ${formatPartList(p1, 2, weekInfo.label, '1동')}
               </div>
               <div class="part-box">
                 <span class="part-title">2동(1):</span>
-                ${formatPartList(p2, 1)}
+                ${formatPartList(p2, 1, weekInfo.label, '2동')}
               </div>
             </div>
           </div>
@@ -548,30 +863,17 @@ function renderCalendars() {
   }
 }
 
-function formatPartList(list, limit) {
+function formatPartList(list, limit, weekLabel, partName) {
   if (!appData.config.isOpen && !isAdmin) {
     return `<span class="${list.length > limit ? 'over-text' : ''}">${list.length}/${limit}명</span>`;
   }
   if (list.length === 0) return `<span style="color:#aaa;">공석</span>`;
 
-  return list.map(item => {
-    const displayName = esc(isAdmin ? (item.realName || item.name) : item.name);
-    const isNight = item.type === '나이트킵';
-    const isConfirmed = item.status === '확정';
-    const chipClass = isNight ? 'night-chip' : (isConfirmed ? 'confirmed' : '');
-    const icon = isNight ? '🌙' : (isConfirmed ? '✅' : '');
-    const suffix = isNight ? '(나이트)' : '';
-
-    const adminBtns = (isAdmin && !isNight) ? `
-      <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">확정</button>
-      <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
-    ` : '';
-
-    return `<span class="person-chip ${chipClass}">${icon}${displayName}${suffix}${adminBtns}</span>`;
-  }).join('');
+  return renderChipsWithLimit(list, 'LEAVE', weekLabel, partName, false);
 }
 
 function selectWeek(label) {
+  if (appData.config.isOpen) return;
   selectedWeekLabel = label;
   document.getElementById('selectedWeek').value = label;
   renderCalendars();
@@ -635,14 +937,14 @@ async function submitForm() {
 async function toggleAdminMode() {
   if (isAdmin) {
     setAdminUI(false);
-    await fetchData(); // 이름·사번 원문이 없는 일반 데이터로 다시 불러옴
+    await fetchData();
     return;
   }
   const pw = prompt('관리자 비밀번호를 입력하세요:');
   if (!pw) return;
   adminPw = pw;
   setAdminUI(true);
-  await fetchData(); // 서버가 비밀번호를 검증, 실패 시 fetchData가 관리자 모드를 해제
+  await fetchData();
 }
 
 async function saveNotice() {
