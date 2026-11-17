@@ -288,7 +288,7 @@
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCelndaiO1XkmG3o4dfKyF4kGeRP0AHn-424HtsMt2p-8W4y42FXSkEb_f10MU9tk3/exec';
 
-const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청기간에는 자유롭게 수정 가능\n3. 3차 신청 시 선착순으로 완료";
+const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청기간(확정 전)에는 수정 가능합니다 (신청내역 조회 참고)\n3. 3차 신청 시 선착순으로 진행됩니다.";
 
 let appData = { config: {}, data: [] };
 let isAdmin = false;
@@ -647,8 +647,8 @@ function openMyAppsModal() {
   const isOpen = Boolean(appData.config.isOpen);
   // ★ 5번 요청: 전체공개 안내 문구에 '(삭제 시 관리자에게 연락바랍니다)' 추가
   document.getElementById('myAppsNotice').innerText = isOpen
-    ? '※ 현재 전체공개 기간이므로 조회만 가능하며 삭제는 불가합니다. (삭제 시 관리자에게 연락바랍니다)'
-    : '※ 이름과 사번을 입력하면 신청 내역을 확인하고 취소(삭제)할 수 있습니다. (이미 확정된 내역은 삭제 불가)';
+    ? '※ 현재 전체공개 기간이므로 조회만 가능하며 삭제는 불가합니다. \n(변경 희망 시 관리자에게 연락바랍니다)'
+    : '※ 이름과 사번을 입력하면 신청 내역을 확인하고 취소(삭제)할 수 있습니다. (확정 내역 삭제 시 관리자에게 문의)';
   document.getElementById('myAppsModal').style.display = 'flex';
 }
 
@@ -684,7 +684,7 @@ async function searchMyApps() {
     resEl.innerHTML = result.apps.map(app => {
       const canDel = result.canDelete && app.status === '신청중';
       let noDelReason = '삭제불가';
-      if (!result.canDelete) noDelReason = '전체공개 삭제불가';
+      if (!result.canDelete) noDelReason = '전체공개 중 삭제불가';
       else if (app.status === '확정') noDelReason = '확정건 삭제불가 (관리자 문의)';
 
       const delBtn = canDel
