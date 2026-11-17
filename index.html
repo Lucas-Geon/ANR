@@ -1194,6 +1194,18 @@ async function updateStatus(rowIdx, status) {
   }
 }
 
+let isNightBoardCollapsed = false;
+
+function toggleNightBoard() {
+  isNightBoardCollapsed = !isNightBoardCollapsed;
+  const grid = document.getElementById('nightGrid');
+  const btn = document.getElementById('nightToggleBtn');
+
+  grid.style.display = isNightBoardCollapsed ? 'none' : 'grid';
+  btn.innerText = isNightBoardCollapsed ? '펼치기 ▼' : '최소화 ▲';
+  btn.style.background = isNightBoardCollapsed ? '#6f42c1' : '#e03131';
+}
+
 fetchData();
 </script>
 </body>
