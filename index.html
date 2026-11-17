@@ -240,9 +240,8 @@
       <span>🔧 <strong>진행 단계:</strong></span>
       <button onclick="adminAction('TOGGLE_OPEN')" style="background:#20c997;">블라인드 / 전체공개 전환</button>
       <button onclick="adminAction('SET_ROUND', '1')">① 1차 신청</button>
-      <button onclick="adminAction('SET_ROUND', 'NIGHT_WEEK')" style="background:#6f42c1;">② 나이트 주차선택</button>
-      <button onclick="adminAction('SET_ROUND', '2')">③ 2차 신청</button>
-      <button onclick="adminAction('SET_ROUND', '3')" style="background:#e8590c;">④ 3차 선착순</button>
+      <button onclick="adminAction('SET_ROUND', '2')">② 2차 신청</button>
+      <button onclick="adminAction('SET_ROUND', '3')" style="background:#e8590c;">③ 3차 선착순(상시)</button>
 
       <div class="admin-divider"></div>
       <span>⚡ <strong>일괄 처리:</strong></span>
@@ -386,16 +385,15 @@ function updateApplyTypeOptions(round) {
   const optNightWeek = document.getElementById('optNightWeek');
   const select = document.getElementById('applyType');
 
-  if (round === 'NIGHT_WEEK') {
-    optLeave.style.display = 'none';
-    optNightApply.style.display = 'none';
+  if (round === '2') {
+    optLeave.style.display = '';
+    optNightApply.style.display = '';
     optNightWeek.style.display = '';
-    select.value = 'NIGHT_WEEK';
   } else if (round === '3') {
     optLeave.style.display = '';
     optNightApply.style.display = 'none';
-    optNightWeek.style.display = 'none';
-    select.value = 'LEAVE';
+    optNightWeek.style.display = '';
+    if (select.value === 'NIGHT_APPLY') select.value = 'LEAVE';
   } else {
     optLeave.style.display = '';
     optNightApply.style.display = '';
