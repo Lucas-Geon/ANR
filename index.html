@@ -243,7 +243,7 @@
 
       <div class="admin-divider"></div>
       <span>⚡ <strong>일괄 처리:</strong></span>
-      <button onclick="runBatchAction('BATCH_CONFIRM')" style="background:#2b8a3e;">✅ 경합 확정</button>
+      <button onclick="runBatchAction('BATCH_CONFIRM')" style="background:#2b8a3e;">✅ 일괄 확정 (정원 내 + 강조 인원)</button>
       <button onclick="runBatchAction('BATCH_REJECT_UNFLAGGED')" style="background:#c92a2a;">🗑️ 탈락자 삭제</button>
     </div>
 
@@ -580,18 +580,22 @@ function buildPersonChipHtml(item, isNightBoard = false) {
   }
   if (isFlagged) classes.push('flagged-red');
 
-  let icon = '';
+let icon = '';
   if (isFlagged) {
     icon = '🔴';
   } else if (isNight) {
-    icon = '🌙';
+    icon = isConfirmed ? '🌙✅' : '🌙';
   } else if (isConfirmed) {
     icon = '✅';
   }
 
   let suffix = '';
   if (isNightBoard) {
-    suffix = item.week.includes('주차') ? `(${esc(item.week.split(' ')[0])})` : '';
+    if (item.week.includes('주차')) {
+      suffix = `(${esc(item.week.split(' ')[0])})`;
+    } else if (isConfirmed) {
+      suffix = '(확정·주차미정)';
+    }
   } else {
     suffix = isNight ? `(${esc(item.part)})` : '';
   }
