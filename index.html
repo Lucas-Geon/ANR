@@ -36,6 +36,8 @@
   button.btn-night:hover { background: #59339d; }
   button.btn-danger { background: #dc3545; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
   button.btn-success { background: #28a745; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+  button.btn-secondary { background: #6c757d; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+  button.btn-secondary:hover { background: #5a6268; }
 
   /* 파트 기준 필터 버튼 그룹 */
   .part-filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -602,16 +604,22 @@ let icon = '';
 
   const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
 
-  let adminBtns = '';
+let adminBtns = '';
   if (isAdmin) {
     if (isNightBoard) {
+      const mainBtn = isConfirmed
+        ? `<button class="btn-secondary" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '신청중')" title="확정 취소(신청중으로 복귀)">취소</button>`
+        : `<button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">당첨</button>`;
       adminBtns = `
-        <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">당첨</button>
+        ${mainBtn}
         <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
       `;
     } else if (!isNight) {
+      const mainBtn = isConfirmed
+        ? `<button class="btn-secondary" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '신청중')" title="확정 취소(신청중으로 복귀)">취소</button>`
+        : `<button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">확정</button>`;
       adminBtns = `
-        <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">확정</button>
+        ${mainBtn}
         <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
       `;
     }
