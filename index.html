@@ -284,7 +284,7 @@
   <!-- 월별 나이트킵 신청 & 추첨 현황 보드 -->
   <div class="night-board">
     <div class="night-board-title">
-      <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명 — 오프주는 장기휴가와 중복 가능)</span>
+      <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명 — 연속주 휴가 불가)</span>
       <span style="font-size:12px; font-weight:normal; color:#666;">* 1·2차 신청 기간 중 아래 월 카드를 클릭하면 바로 선택됩니다</span>
     </div>
     <div id="nightGrid" class="night-grid"></div>
@@ -333,6 +333,38 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
+}
+
+function extractWeekNum(weekStr) {
+  const m = /^(\d{1,2})주차/.exec(String(weekStr || '').trim());
+  return m ? Number(m[1]) : null;
+}
+
+// ★ 클라이언트 사전 연속주차 검사 (이름이 공개되어 있는 확정건 기준 1차 안내)
+function checkClientConsecutiveWarning(name, candidateWeek, targetType) {
+  const newWeekNum = extractWeekNum(candidateWeek);
+  const normName = String(name || '').replace(/\s+/g, '');
+  if (!newWeekNum || !normName || !Array.isArray(appData.data)) return null;
+
+  for (const item of appData.data) {
+    if (item.status === '탈락') continue;
+    const itemName = String(item.realName || item.name || '').replace(/\s+/g, '');
+    if (!itemName || itemName === '***' || itemName !== normName) continue;
+
+    const existingType = item.type || '장기휴가';
+    const existingWeekNum = extractWeekNum(item.week);
+    if (!existingWeekNum) continue;
+
+    const isRestrictedPair =
+      (targetType === '장기휴가' && existingType === '나이트킵') ||
+      (targetType === '나이트킵' && existingType === '장기휴가') ||
+      (targetType === '나이트킵' && existingType === '나이트킵');
+
+    if (isRestrictedPair && Math.abs(newWeekNum - existingWeekNum) === 1) {
+      return `연속 주차 휴가 사용이 불가합니다.\n기존 [${existingType}: ${item.week}] 일정과 연속된 주차(${candidateWeek})는 선택할 수 없습니다.`;
+    }
+  }
+  return null;
 }
 
 function build2027WeekMap() {
@@ -506,7 +538,7 @@ async function fetchData() {
     const round = String(appData.config.round);
 
     if (round === 'NIGHT_WEEK') {
-      roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간 (중복 선택 가능)';
+      roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간 (연속주 불가)';
       roundBadge.className = 'badge badge-night';
     } else if (round === '2') {
       roundBadge.innerText = '2차 신청 기간 (장기+나이트, 추첨제)';
@@ -1031,6 +1063,9 @@ async function submitForm() {
 
   if (applyType === 'LEAVE') {
     if (!week) return alert('달력에서 원하는 주(월~금)를 클릭해주세요.');
+    const consecErr = checkClientConsecutiveWarning(name, week, '장기휴가');
+    if (consecErr) return alert(consecErr);
+
     payload = { action: 'APPLY_LEAVE', part, empId, name, week };
     confirmMsg = `[장기휴가 최종 신청 확인]\n\n` +
                  `• 소속 구분: 【 ${part} 】 해당\n` +
@@ -1047,6 +1082,9 @@ async function submitForm() {
                  `신청하신 곳이 '${part}' 해당이 맞습니까?\n확인 버튼을 누르면 최종 접수됩니다.`;
   } else if (applyType === 'NIGHT_WEEK') {
     if (!week) return alert('달력에서 나이트 오프로 사용할 주(월~금)를 클릭해주세요.');
+    const consecErr = checkClientConsecutiveWarning(name, week, '나이트킵');
+    if (consecErr) return alert(consecErr);
+
     payload = { action: 'SELECT_NIGHT_WEEK', empId, name, week };
     confirmMsg = `[나이트킵 오프주 최종 확정 확인]\n\n` +
                  `• 신청자: ${name} (${empId})\n` +
