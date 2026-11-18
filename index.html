@@ -396,7 +396,7 @@ function updateApplyTypeOptions(round) {
   const optNightWeek = document.getElementById('optNightWeek');
   const select = document.getElementById('applyType');
 
-  if (round === 'NIGHT_WEEK') {
+  if (isAdjustMode()) {
     optLeave.style.display = 'none';
     optNightApply.style.display = 'none';
     optNightWeek.style.display = '';
@@ -404,14 +404,13 @@ function updateApplyTypeOptions(round) {
   } else if (round === '2') {
     optLeave.style.display = '';
     optNightApply.style.display = '';
-    optNightWeek.style.display = ''; // 2차 기간 중 언제든 선택 가능
+    optNightWeek.style.display = '';
   } else if (round === '3') {
     optLeave.style.display = '';
     optNightApply.style.display = 'none';
-    optNightWeek.style.display = ''; // 3차 기간 중 언제든 선택 가능
+    optNightWeek.style.display = '';
     if (select.value === 'NIGHT_APPLY') select.value = 'LEAVE';
   } else {
-    // 1차 신청 기간
     optLeave.style.display = '';
     optNightApply.style.display = '';
     optNightWeek.style.display = 'none';
@@ -552,9 +551,8 @@ async function fetchData() {
     }
 
     const adjustMode = isAdjustMode();
-    document.getElementById('formInputsArea').style.display = adjustMode ? 'none' : 'flex';
+    document.getElementById('formInputsArea').style.display = 'flex';
     document.getElementById('openModeGuide').style.display = adjustMode ? 'block' : 'none';
-
     updateApplyTypeOptions(round);
     toggleFormMode();
 
@@ -944,7 +942,7 @@ function renderCalendars() {
         hasConfirmed = weekApps.some(d => d.status === '확정');
       }
 
-      const canClickWeek = isValidWeek && !adjustMode;
+      const canClickWeek = isValidWeek;
       const isSelected = canClickWeek && (selectedWeekLabel === weekInfo.label);
       const showOver = isValidWeek && isOver && adjustMode;
       const showConfirmed = isValidWeek && hasConfirmed && !showOver;
@@ -1037,8 +1035,7 @@ function formatPartList(list, limit, weekLabel, partName) {
   return renderChipsWithLimit(list, 'LEAVE', weekLabel, partName, false);
 }
 
-function selectWeek(label) {
-  if (isAdjustMode()) return;
+  function selectWeek(label) {
   selectedWeekLabel = label;
   document.getElementById('selectedWeek').value = label;
   renderCalendars();
