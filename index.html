@@ -48,7 +48,16 @@
 
   /* 나이트킵 월별 신청 현황 보드 */
   .night-board { background: #fff; border: 2px solid #d0bfff; border-radius: 10px; padding: 15px 20px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(111, 66, 193, 0.08); }
-  .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+ .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .night-board.collapsed .night-board-title { margin-bottom: 0; }
+  .night-board.collapsed .night-grid { display: none; }
+  .btn-toggle-night { background: #f3f0ff; color: #5f3dc4; border: 1px solid #d0bfff; padding: 4px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+  .btn-toggle-night:hover { background: #e5dbff; }
+
+  /* 장기휴가 섹션 제목 */
+  .leave-board-header { background: #fff; border: 2px solid #bae0ff; border-radius: 10px; padding: 12px 20px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0, 86, 179, 0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .leave-board-title { font-size: 16px; font-weight: bold; color: #0056b3; margin: 0; }
+
   .night-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
   .night-month-card { background: #f8f5ff; border: 1px solid #e5dbff; border-radius: 8px; padding: 10px; font-size: 13px; transition: 0.15s; }
   .night-month-card.selectable { cursor: pointer; }
@@ -281,12 +290,21 @@
   </div>
 
   <!-- 월별 나이트킵 신청 & 추첨 현황 보드 -->
-  <div class="night-board">
+  <div id="nightBoard" class="night-board">
     <div class="night-board-title">
       <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명 — 연속주 휴가 불가)</span>
-      <span style="font-size:12px; font-weight:normal; color:#666;">* 1·2차 신청 기간 중 아래 월 카드를 클릭하면 바로 선택됩니다</span>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span style="font-size:12px; font-weight:normal; color:#666;">* 1·2차 신청 기간 중 아래 월 카드를 클릭하면 바로 선택됩니다</span>
+        <button type="button" id="toggleNightBtn" class="btn-toggle-night" onclick="toggleNightBoard()">▲ 접기(최소화)</button>
+      </div>
     </div>
     <div id="nightGrid" class="night-grid"></div>
+  </div>
+
+  <!-- 장기휴가 캘린더 영역 제목 -->
+  <div class="leave-board-header">
+    <h3 class="leave-board-title">🏖️ 2027년 주차별 장기휴가 & 나이트 오프주 신청 현황 (정원: 1동 2명 / 2동 1명)</h3>
+    <span style="font-size:12px; color:#666;">* 달력에서 원하는 주(월~금)를 클릭하면 상단에 자동 선택됩니다 (🌙표시는 나이트 오프주 확정/신청자)</span>
   </div>
 
   <!-- 1월~12월 달력 영역 -->
@@ -464,6 +482,14 @@ function selectNightMonth(mStr) {
   }
 }
 
+ // ▼ 여기부터 추가 ▼
+function toggleNightBoard() {
+  const board = document.getElementById('nightBoard');
+  const btn = document.getElementById('toggleNightBtn');
+  const isCollapsed = board.classList.toggle('collapsed');
+  btn.innerText = isCollapsed ? '▼ 펼치기' : '▲ 접기(최소화)';
+}
+ 
 function setLoading(isLoading, text = '동기화 중...') {
   document.getElementById('loadingMsg').innerText = isLoading ? text : '';
 }
