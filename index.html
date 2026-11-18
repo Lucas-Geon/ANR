@@ -1077,19 +1077,37 @@ async function submitForm() {
   const targetMonth = document.getElementById('targetMonth').value;
 
   if (!name || !empId) return alert('이름과 사번을 입력해주세요.');
-  if (empId.length !== 5) return alert('사번은 정확히 5글자로 입력해주세요.');
 
   let payload = {};
+  let confirmMsg = '';
+
   if (applyType === 'LEAVE') {
     if (!week) return alert('달력에서 원하는 주(월~금)를 클릭해주세요.');
     payload = { action: 'APPLY_LEAVE', part, empId, name, week };
+    confirmMsg = `[장기휴가 최종 신청 확인]\n\n` +
+                 `• 소속 구분: 【 ${part} 】 해당\n` +
+                 `• 신청자: ${name} (${empId})\n` +
+                 `• 신청 일정: ${week}\n\n` +
+                 `신청하신 곳이 '${part}' 해당이 맞습니까?\n확인 버튼을 누르면 최종 접수됩니다.`;
   } else if (applyType === 'NIGHT_APPLY') {
     if (!targetMonth) return alert('나이트킵 희망 월을 선택해주세요.');
     payload = { action: 'APPLY_NIGHT', part, empId, name, targetMonth };
+    confirmMsg = `[나이트킵 최종 신청 확인]\n\n` +
+                 `• 소속 구분: 【 ${part} 】 해당\n` +
+                 `• 신청자: ${name} (${empId})\n` +
+                 `• 희망 월: ${targetMonth} 나이트킵\n\n` +
+                 `신청하신 곳이 '${part}' 해당이 맞습니까?\n확인 버튼을 누르면 최종 접수됩니다.`;
   } else if (applyType === 'NIGHT_WEEK') {
     if (!week) return alert('달력에서 나이트 오프로 사용할 주(월~금)를 클릭해주세요.');
     payload = { action: 'SELECT_NIGHT_WEEK', empId, name, week };
+    confirmMsg = `[나이트킵 오프주 최종 확정 확인]\n\n` +
+                 `• 신청자: ${name} (${empId})\n` +
+                 `• 선택 일정: ${week}\n\n` +
+                 `해당 주차로 최종 등록하시겠습니까?`;
   }
+
+  // ★ 최종 신청 전 확인 팝업 (취소 누르면 전송 중단)
+  if (!confirm(confirmMsg)) return;
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -1119,7 +1137,6 @@ async function submitForm() {
     setLoading(false);
   }
 }
-
 async function toggleAdminMode() {
   if (isAdmin) {
     setAdminUI(false);
