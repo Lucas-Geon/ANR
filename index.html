@@ -36,19 +36,24 @@
   button.btn-night:hover { background: #59339d; }
   button.btn-danger { background: #dc3545; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
   button.btn-success { background: #28a745; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+  button.btn-secondary { background: #6c757d; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+  button.btn-secondary:hover { background: #5a6268; }
 
-  .month-nav { display: flex; gap: 4px; flex-wrap: wrap; }
-  .month-nav a { text-decoration: none; background: #fff; color: #333; border: 1px solid #ddd; padding: 5px 9px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-  .month-nav a:hover { background: #0056b3; color: #fff; border-color: #0056b3; }
+  /* 파트 기준 필터 버튼 그룹 */
+  .part-filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .part-filter-label { font-size: 12.5px; font-weight: bold; color: #495057; }
+  .part-filter-btn { background: #f1f3f5; color: #495057; border: 1px solid #ced4da; padding: 6px 13px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.15s; }
+  .part-filter-btn:hover { background: #e9ecef; color: #212529; }
+  .part-filter-btn.active { background: #2b8a3e; color: #fff; border-color: #2b8a3e; box-shadow: 0 2px 4px rgba(43, 138, 62, 0.25); }
 
   .admin-panel { background: #343a40; color: #fff; padding: 12px 20px; border-radius: 8px; margin-bottom: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .admin-divider { width: 1px; height: 22px; background: #6c757d; margin: 0 4px; }
   .admin-pending-badge { background: #ffd43b; color: #212529; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-left: auto; }
   .loading-overlay { font-size: 13px; color: #0056b3; font-weight: bold; margin-left: 8px; }
 
-  /* 나이트킵 월별 신청 현황 보드 */
-  .night-board { background: #fff; border: 2px solid #d0bfff; border-radius: 10px; padding: 15px 20px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(111, 66, 193, 0.08); }
- .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; user-select: none; }
+  /* 나이트킵 월별 신청 현황 보드 (기본 최소화 및 강조 토글) */
+  .night-board { background: #fff; border: 2px solid #d0bfff; border-radius: 10px; padding: 14px 20px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(111, 66, 193, 0.08); transition: 0.15s; }
+  .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; user-select: none; }
   .night-board.collapsed { background: #faf8ff; border-style: dashed; }
   .night-board.collapsed:hover { background: #f3f0ff; border-style: solid; border-color: #7950f2; }
   .night-board.collapsed .night-board-title { margin-bottom: 0; }
@@ -57,10 +62,6 @@
   .btn-toggle-night:hover { background: #59339d; transform: translateY(-1px); }
   .night-board:not(.collapsed) .btn-toggle-night { background: #e9ecef; color: #495057; box-shadow: none; }
   .night-board:not(.collapsed) .btn-toggle-night:hover { background: #dee2e6; }
-
-  /* 장기휴가 섹션 제목 */
-  .leave-board-header { background: #fff; border: 2px solid #bae0ff; border-radius: 10px; padding: 12px 20px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0, 86, 179, 0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-  .leave-board-title { font-size: 16px; font-weight: bold; color: #0056b3; margin: 0; }
 
   .night-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
   .night-month-card { background: #f8f5ff; border: 1px solid #e5dbff; border-radius: 8px; padding: 10px; font-size: 13px; transition: 0.15s; }
@@ -107,14 +108,21 @@
 
   .part-boxes { display: flex; gap: 6px; flex: 1; justify-content: flex-end; flex-wrap: wrap; }
   .part-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 3px 7px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .part-box.active-part-box { border-color: #2b8a3e; background: #f8fff9; }
   .part-title { font-weight: bold; color: #333; }
   .over-text { color: #dc3545; font-weight: bold; }
 
+  /* 나이트 오프 별도 줄 */
+  .night-sub-bar { width: 100%; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #e5dbff; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .night-sub-title { font-size: 11.5px; font-weight: bold; color: #5f3dc4; background: #f3f0ff; border: 1px solid #d0bfff; padding: 2px 7px; border-radius: 4px; }
+
+  /* 신청 유형별 배지 이원화 스타일 */
   .person-chip { display: inline-flex; align-items: center; gap: 3px; background: #fff; border: 1px solid #ced4da; padding: 2px 6px; border-radius: 4px; font-size: 12px; transition: 0.15s; }
   .person-chip.clickable-name { cursor: pointer; }
   .person-chip.clickable-name:hover { border-color: #fa5252; background: #fff5f5; }
-  .person-chip.confirmed { background: #ebfbee; border-color: #40c057; font-weight: bold; }
-  .person-chip.night-chip { background: #f3f0ff; border-color: #9775fa; color: #5f3dc4; font-weight: bold; }
+  .person-chip.confirmed { background: #ebfbee; border: 1.5px solid #2b8a3e; color: #1b5e20; font-weight: bold; }
+  .person-chip.night-chip { background: #f8f5ff; border: 1px solid #b197fc; color: #5f3dc4; font-weight: bold; }
+  .person-chip.night-confirmed { background: #ede9fe; border: 1.5px solid #5b21b6; color: #3b0764; font-weight: bold; }
   .person-chip.flagged-red { background: #ffe3e3 !important; border: 1.5px solid #e03131 !important; color: #c92a2a !important; font-weight: bold !important; box-shadow: 0 0 0 1px rgba(224,49,49,0.2); }
 
   .more-chip { display: inline-flex; align-items: center; background: #343a40; color: #fff; border: none; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
@@ -147,6 +155,7 @@
     .form-inputs select,
     .form-inputs input,
     .form-inputs button { width: 100% !important; }
+    .part-filter-group { width: 100%; justify-content: flex-start; }
     .night-board { padding: 12px 14px; }
     .night-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .week-status-bar { padding: 5px 8px 6px 8px; }
@@ -196,7 +205,7 @@
     <div class="modal-body">
       <div style="display:flex; gap:6px; margin-bottom:12px;">
         <input type="text" id="checkName" placeholder="이름 입력" style="flex:1; width:100%;">
-        <input type="text" id="checkEmpId" placeholder="사번 입력 (5자리)" maxlength="5" style="flex:1; width:100%;">
+        <input type="text" id="checkEmpId" placeholder="사번 5자리" maxlength="5" style="flex:1; width:100%;">
         <button onclick="searchMyApps()" style="white-space:nowrap;">조회</button>
       </div>
       <div id="myAppsNotice" style="font-size:12px; color:#666; margin-bottom:10px;"></div>
@@ -213,12 +222,13 @@
     <div class="header">
       <div class="header-top">
         <div>
-          <h2 style="margin:0 0 6px 0; font-size:20px;">📅 2027년 장기휴가 & 🌙 나이트킵 신청 프로그램</h2>
+          <h2 style="margin:0 0 6px 0; font-size:20px;">📅 2027년 ANR 장기휴가 & 🌙 나이트킵 신청 프로그램</h2>
           <span id="roundBadge" class="badge badge-round">로딩중...</span>
           <span id="modeBadge" class="badge badge-blind">상태 확인중...</span>
           <span id="loadingMsg" class="loading-overlay"></span>
         </div>
         <div class="header-btns">
+          <button onclick="window.open('https://wheelofnames.com/ko', '_blank', 'noopener')" style="background:#e67700;">🎡 돌림판</button>
           <button onclick="openMyAppsModal()" style="background:#495057;">신청내역확인</button>
           <button onclick="fetchData()" style="background:#17a2b8;">새로고침</button>
           <button id="adminToggleBtn" onclick="toggleAdminMode()" style="background:#6c757d;">관리자 모드</button>
@@ -242,14 +252,13 @@
       <button onclick="adminAction('TOGGLE_OPEN')" style="background:#20c997;">블라인드 / 전체공개 전환</button>
       <button onclick="adminAction('SET_ROUND', '1')">① 1차 신청</button>
       <button onclick="adminAction('SET_ROUND', '2')">② 2차 신청</button>
-      <button onclick="adminAction('SET_ROUND', '3')" style="background:#e8590c;">③ 3차 선착순</button>
+      <button onclick="adminAction('SET_ROUND', '3')" style="background:#e8590c;">③ 3차 선착순(상시)</button>
 
       <div class="admin-divider"></div>
       <span>⚡ <strong>일괄 처리:</strong></span>
-      <button onclick="runBatchAction('BATCH_CONFIRM')" style="background:#2b8a3e;">✅ 경합 확정</button>
+      <button onclick="runBatchAction('BATCH_CONFIRM')" style="background:#2b8a3e;">✅ 일괄 확정 (정원 내 + 강조 인원)</button>
       <button onclick="runBatchAction('BATCH_REJECT_UNFLAGGED')" style="background:#c92a2a;">🗑️ 탈락자 삭제</button>
 
-      <!-- 신규 신청(미확정 '신청중' 상태) 건수 표출 배지 -->
       <span id="adminPendingCount" class="admin-pending-badge">📋 총 0건의 신규신청이 있습니다</span>
     </div>
 
@@ -268,7 +277,7 @@
         </select>
 
         <input type="text" id="name" placeholder="이름 입력" maxlength="20" style="width:105px;">
-        <input type="text" id="empId" placeholder="사번 입력 (5자리)" maxlength="5" style="width:125px;">
+        <input type="text" id="empId" placeholder="사번 5자리" maxlength="5" style="width:115px;">
 
         <input type="text" id="selectedWeek" placeholder="달력에서 원하는 주 클릭" readonly style="background:#eef5ff; border-color:#0056b3; font-weight:bold; width:200px;">
 
@@ -286,15 +295,20 @@
       </div>
 
       <div id="openModeGuide" style="display:none; font-size:13.5px; color:#c92a2a; font-weight:bold;">
-        📢 현재 전체공개(조정) 기간입니다. 경합 주차의 당첨/선정된 이름을 클릭해 붉은색으로 강조하면 관리자가 일괄 확정합니다.
+        📢 현재 전체공개(조정) 기간입니다. 경합 주차의 당첨/선정된 이름을 클릭해 붉은색으로 강조하면 관리자가 일괄 확정합니다. (나이트 당첨자는 상단에서 오프주 선택 가능)
       </div>
 
-      <div class="month-nav" id="monthNav"></div>
+      <div class="part-filter-group">
+        <span class="part-filter-label">주차 표시 기준:</span>
+        <button type="button" id="filterBtn-ALL" class="part-filter-btn active" onclick="setPartFilter('ALL')">전체</button>
+        <button type="button" id="filterBtn-1동" class="part-filter-btn" onclick="setPartFilter('1동')">1파트</button>
+        <button type="button" id="filterBtn-2동" class="part-filter-btn" onclick="setPartFilter('2동')">2파트</button>
+      </div>
     </div>
   </div>
 
-  <!-- 월별 나이트킵 신청 & 추첨 현황 보드 -->
-<div id="nightBoard" class="night-board collapsed">
+  <!-- 월별 나이트킵 신청 & 추첨 현황 보드 (기본 접힘 상태) -->
+  <div id="nightBoard" class="night-board collapsed">
     <div class="night-board-title" onclick="toggleNightBoard()">
       <span>🌙 2027년 월별 나이트킵 신청 현황 <span style="font-size:13px; font-weight:normal; color:#7950f2;">(클릭하여 1~12월 현황 펼쳐보기)</span></span>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -305,20 +319,18 @@
     <div id="nightGrid" class="night-grid"></div>
   </div>
 
-  <!-- 장기휴가 캘린더 영역 제목 -->
-  <div class="leave-board-header">
-    <h3 class="leave-board-title">🏖️ 2027년 주차별 장기휴가 & 나이트 오프주 신청 현황 (정원: 1동 2명 / 2동 1명)</h3>
-    <span style="font-size:12px; color:#666;">* 달력에서 원하는 주(월~금)를 클릭하면 상단에 자동 선택됩니다 (🌙표시는 나이트 오프주 확정/신청자)</span>
-  </div>
-
   <!-- 1월~12월 달력 영역 -->
+  <div style="background:#fff; border:2px solid #bac8ff; border-radius:10px; padding:13px 20px; margin-bottom:14px; box-shadow:0 2px 6px rgba(0, 86, 179, 0.08); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+    <span style="font-size:16px; font-weight:bold; color:#0056b3;">🏖️ 2027년 주차별 장기휴가 신청 현황 (정원: 1동 2명 / 2동 1명)</span>
+    <span style="font-size:12px; color:#666;">* 신청 기간 중 원하는 주차(월~금)를 클릭하면 상단 입력칸에 자동 선택됩니다</span>
+  </div>
   <div id="monthsContainer" class="months-wrapper"></div>
 </div>
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCelndaiO1XkmG3o4dfKyF4kGeRP0AHn-424HtsMt2p-8W4y42FXSkEb_f10MU9tk3/exec';
 
-const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청기간(확정 전)에는 수정 가능합니다(신청내역 조회 참고).\n3. 3차 신청 시 선착순으로 확정됩니다.";
+const DEFAULT_NOTICE = "1. 사번/이름 정확히 입력해주세요!\n2. 신청 수정 및 취소 시 우측 상단 '신청내역확인' 참고해주세요.\n3. 1차 추첨→2차 추첨→3차 선착순으로 진행됩니다.";
 
 let appData = { config: {}, data: [] };
 let isAdmin = false;
@@ -326,6 +338,7 @@ let adminPw = '';
 let selectedWeekLabel = '';
 let currentNoticeText = '';
 let activeMoreContext = null;
+let selectedPartFilter = 'ALL'; // 'ALL' | '1동' | '2동'
 
 const HOLIDAYS_2027 = {
   '1-1': '신정', '2-5': '설연휴', '2-6': '설날', '2-7': '설연휴', '2-8': '대체휴일',
@@ -401,17 +414,15 @@ function build2027WeekMap() {
 
 const WEEK_MAP_BY_MON = build2027WeekMap();
 
-function initMonthNav() {
-  const nav = document.getElementById('monthNav');
-  for (let m = 1; m <= 12; m++) {
-    const a = document.createElement('a');
-    a.href = `#month-${m}`;
-    a.innerText = `${m}월`;
-    nav.appendChild(a);
-  }
+function setPartFilter(partKey) {
+  selectedPartFilter = partKey;
+  ['ALL', '1동', '2동'].forEach(k => {
+    const btn = document.getElementById(`filterBtn-${k}`);
+    if (btn) btn.classList.toggle('active', k === partKey);
+  });
+  renderCalendars();
 }
 
-// ★ 수정된 부분: 2차 및 3차 추첨 기간에 언제든 '나이트 당첨자 오프주 선택'이 표시되도록 변경
 function updateApplyTypeOptions(round) {
   const optLeave = document.getElementById('optLeave');
   const optNightApply = document.getElementById('optNightApply');
@@ -447,13 +458,13 @@ function toggleFormMode() {
   const partSelect = document.getElementById('part');
   const btn = document.getElementById('submitBtn');
 
- if (type === 'NIGHT_APPLY') {
+  if (type === 'NIGHT_APPLY') {
     weekInput.style.display = 'none';
     monthSelect.style.display = 'inline-block';
     partSelect.style.display = 'inline-block';
     btn.innerText = '나이트킵 신청';
     btn.className = 'btn-night';
-    toggleNightBoard(true); // ★ 나이트 신청 선택 시 자동으로 보드 펼침
+    toggleNightBoard(true);
   } else if (type === 'NIGHT_WEEK') {
     weekInput.style.display = 'inline-block';
     monthSelect.style.display = 'none';
@@ -487,7 +498,6 @@ function selectNightMonth(mStr) {
   }
 }
 
- // ▼ 여기부터 추가 ▼
 function toggleNightBoard(forceOpen = null) {
   const board = document.getElementById('nightBoard');
   const btn = document.getElementById('toggleNightBtn');
@@ -497,7 +507,7 @@ function toggleNightBoard(forceOpen = null) {
 
   btn.innerText = isCollapsed ? '▼ 월별 현황 펼치기' : '▲ 접기(최소화)';
 }
- 
+
 function setLoading(isLoading, text = '동기화 중...') {
   document.getElementById('loadingMsg').innerText = isLoading ? text : '';
 }
@@ -587,6 +597,7 @@ async function fetchData() {
     const adjustMode = isAdjustMode();
     document.getElementById('formInputsArea').style.display = 'flex';
     document.getElementById('openModeGuide').style.display = adjustMode ? 'block' : 'none';
+
     updateApplyTypeOptions(round);
     toggleFormMode();
 
@@ -641,16 +652,32 @@ function buildPersonChipHtml(item, isNightBoard = false) {
 
   const classes = ['person-chip'];
   if (adjustMode && !isConfirmed) classes.push('clickable-name');
-  if (isConfirmed) classes.push('confirmed');
-  else if (isNight) classes.push('night-chip');
+
+  if (isNight) {
+    classes.push(isConfirmed ? 'night-confirmed' : 'night-chip');
+  } else if (isConfirmed) {
+    classes.push('confirmed');
+  }
   if (isFlagged) classes.push('flagged-red');
 
-  const icon = isConfirmed ? '✅' : (isFlagged ? '🔴' : (isNight ? '🌙' : ''));
+  let icon = '';
+  if (isFlagged) {
+    icon = '🔴';
+  } else if (isNight) {
+    icon = isConfirmed ? '🌙✅' : '🌙';
+  } else if (isConfirmed) {
+    icon = '✅';
+  }
+
   let suffix = '';
   if (isNightBoard) {
-    suffix = item.week.includes('주차') ? `(${esc(item.week.split(' ')[0])})` : '';
+    if (item.week.includes('주차')) {
+      suffix = `(${esc(item.week.split(' ')[0])})`;
+    } else if (isConfirmed) {
+      suffix = '(확정·주차미정)';
+    }
   } else {
-    suffix = isNight ? '(나이트)' : '';
+    suffix = isNight ? `(${esc(item.part)})` : '';
   }
 
   const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
@@ -658,13 +685,19 @@ function buildPersonChipHtml(item, isNightBoard = false) {
   let adminBtns = '';
   if (isAdmin) {
     if (isNightBoard) {
+      const mainBtn = isConfirmed
+        ? `<button class="btn-secondary" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '신청중')" title="확정 취소(신청중으로 복귀)">취소</button>`
+        : `<button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">당첨</button>`;
       adminBtns = `
-        <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">당첨</button>
+        ${mainBtn}
         <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
       `;
     } else if (!isNight) {
+      const mainBtn = isConfirmed
+        ? `<button class="btn-secondary" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '신청중')" title="확정 취소(신청중으로 복귀)">취소</button>`
+        : `<button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">확정</button>`;
       adminBtns = `
-        <button class="btn-success" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '확정')">확정</button>
+        ${mainBtn}
         <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
       `;
     }
@@ -679,7 +712,7 @@ function openMoreModal(category, key, part) {
   let title = '';
 
   if (category === 'LEAVE') {
-    fullList = appData.data.filter(d => d.status !== '탈락' && d.week.startsWith(key) && d.part === part);
+    fullList = appData.data.filter(d => d.status !== '탈락' && d.type !== '나이트킵' && d.week.startsWith(key) && d.part === part);
     title = `📋 ${key} - ${part} 전체 신청자 (${fullList.length}명)`;
   } else {
     fullList = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락' && (d.week === key || d.week.includes(`[${key}나이트]`)) && d.part === part);
@@ -963,23 +996,40 @@ function renderCalendars() {
       const isPrimaryMonthForWeek = (monday.getMonth() === m) || (m === 0 && weekInfo && weekInfo.weekNum === 1);
       const isValidWeek = Boolean(weekInfo) && isPrimaryMonthForWeek;
 
-      let p1 = [], p2 = [], isOver = false, hasConfirmed = false;
+      let p1Leaves = [], p2Leaves = [], nightOffList = [], isOver = false, isCompleted = false;
 
       if (isValidWeek) {
         const weekApps = appData.data.filter(d => d.status !== '탈락' && d.week.startsWith(weekInfo.label));
-        p1 = weekApps.filter(d => d.part === '1동');
-        p2 = weekApps.filter(d => d.part === '2동');
+        const leaveApps = weekApps.filter(d => d.type !== '나이트킵');
+        nightOffList = weekApps.filter(d => d.type === '나이트킵');
 
-        const p1LeaveCount = p1.filter(d => d.type !== '나이트킵').length;
-        const p2LeaveCount = p2.filter(d => d.type !== '나이트킵').length;
-        isOver = (p1LeaveCount > 2 || p2LeaveCount > 1);
-        hasConfirmed = weekApps.some(d => d.status === '확정');
+        p1Leaves = leaveApps.filter(d => d.part === '1동');
+        p2Leaves = leaveApps.filter(d => d.part === '2동');
+
+        const p1ConfirmedCount = p1Leaves.filter(d => d.status === '확정').length;
+        const p2ConfirmedCount = p2Leaves.filter(d => d.status === '확정').length;
+
+        const p1Over = p1Leaves.length > 2;
+        const p2Over = p2Leaves.length > 1;
+        const p1FullConfirmed = p1ConfirmedCount >= 2;
+        const p2FullConfirmed = p2ConfirmedCount >= 1;
+
+        if (selectedPartFilter === '1동') {
+          isOver = p1Over;
+          isCompleted = p1FullConfirmed;
+        } else if (selectedPartFilter === '2동') {
+          isOver = p2Over;
+          isCompleted = p2FullConfirmed;
+        } else {
+          isOver = p1Over || p2Over;
+          isCompleted = p1FullConfirmed && p2FullConfirmed;
+        }
       }
 
       const canClickWeek = isValidWeek;
       const isSelected = canClickWeek && (selectedWeekLabel === weekInfo.label);
       const showOver = isValidWeek && isOver && adjustMode;
-      const showConfirmed = isValidWeek && hasConfirmed && !showOver;
+      const showConfirmed = isValidWeek && isCompleted && !showOver;
 
       const blockClass = [
         'week-block',
@@ -1010,19 +1060,29 @@ function renderCalendars() {
 
       let statusBarHtml = '';
       if (isValidWeek) {
+        const p1BoxClass = selectedPartFilter === '1동' ? 'part-box active-part-box' : 'part-box';
+        const p2BoxClass = selectedPartFilter === '2동' ? 'part-box active-part-box' : 'part-box';
+        const nightSubHtml = nightOffList.length > 0 ? `
+          <div class="night-sub-bar">
+            <span class="night-sub-title">🌙 나이트 오프</span>
+            ${formatNightSubList(nightOffList)}
+          </div>
+        ` : '';
+
         statusBarHtml = `
           <div class="week-status-bar">
             <span class="week-tag">${weekInfo.weekNum}주차 (${weekInfo.mon.getMonth()+1}/${weekInfo.mon.getDate()}~${weekInfo.fri.getMonth()+1}/${weekInfo.fri.getDate()}) ${showOver ? '🚨경합' : ''}</span>
             <div class="part-boxes">
-              <div class="part-box">
+              <div class="${p1BoxClass}">
                 <span class="part-title">1동(2):</span>
-                ${formatPartList(p1, 2, weekInfo.label, '1동')}
+                ${formatPartList(p1Leaves, 2, weekInfo.label, '1동')}
               </div>
-              <div class="part-box">
+              <div class="${p2BoxClass}">
                 <span class="part-title">2동(1):</span>
-                ${formatPartList(p2, 1, weekInfo.label, '2동')}
+                ${formatPartList(p2Leaves, 1, weekInfo.label, '2동')}
               </div>
             </div>
+            ${nightSubHtml}
           </div>
         `;
       } else if (weekInfo && !isPrimaryMonthForWeek) {
@@ -1044,32 +1104,32 @@ function renderCalendars() {
   }
 }
 
-function formatPartList(list, limit, weekLabel, partName) {
+function formatPartList(leaveList, limit, weekLabel, partName) {
   if (!isPublicListMode() && !isAdmin) {
-    const leaveList = list.filter(d => d.type !== '나이트킵');
-    const nightList = list.filter(d => d.type === '나이트킵');
-
     const leaveCount = leaveList.length;
     const confirmedLeaves = leaveList.filter(d => d.status === '확정');
-    const confirmedNights = nightList.filter(d => d.status === '확정');
-
-    const confirmedChips = [...confirmedLeaves, ...confirmedNights]
-      .map(item => buildPersonChipHtml(item, false))
-      .join('');
-
-    const unconfirmedNightCount = nightList.length - confirmedNights.length;
-    const nightTag = unconfirmedNightCount > 0
-      ? ` <span style="color:#6f42c1; font-weight:bold;">(+🌙${unconfirmedNightCount})</span>`
-      : '';
-
-    return `${confirmedChips} <span class="${leaveCount > limit ? 'over-text' : ''}">${leaveCount}/${limit}명</span>${nightTag}`;
+    const confirmedChips = confirmedLeaves.map(item => buildPersonChipHtml(item, false)).join('');
+    return `${confirmedChips} <span class="${leaveCount > limit ? 'over-text' : ''}">${leaveCount}/${limit}명</span>`;
   }
-  if (list.length === 0) return `<span style="color:#aaa;">공석</span>`;
+  if (leaveList.length === 0) return `<span style="color:#aaa;">공석</span>`;
 
-  return renderChipsWithLimit(list, 'LEAVE', weekLabel, partName, false);
+  return renderChipsWithLimit(leaveList, 'LEAVE', weekLabel, partName, false);
 }
 
-  function selectWeek(label) {
+function formatNightSubList(nightList) {
+  if (!isPublicListMode() && !isAdmin) {
+    const confirmedNights = nightList.filter(d => d.status === '확정');
+    const unconfirmedCount = nightList.length - confirmedNights.length;
+    const chips = confirmedNights.map(item => buildPersonChipHtml(item, false)).join('');
+    const pendingTag = unconfirmedCount > 0
+      ? `<span style="color:#6f42c1; font-weight:bold; font-size:11.5px;">(+${unconfirmedCount}명)</span>`
+      : '';
+    return `${chips}${pendingTag}`;
+  }
+  return nightList.map(item => buildPersonChipHtml(item, false)).join('');
+}
+
+function selectWeek(label) {
   selectedWeekLabel = label;
   document.getElementById('selectedWeek').value = label;
   renderCalendars();
@@ -1088,6 +1148,7 @@ async function submitForm() {
   const targetMonth = document.getElementById('targetMonth').value;
 
   if (!name || !empId) return alert('이름과 사번을 입력해주세요.');
+  if (empId.length !== 5) return alert('사번은 정확히 5글자로 입력해주세요.');
 
   let payload = {};
   let confirmMsg = '';
@@ -1226,7 +1287,6 @@ async function updateStatus(rowIdx, status) {
   }
 }
 
-initMonthNav();
 fetchData();
 </script>
 </body>
