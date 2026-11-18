@@ -48,11 +48,15 @@
 
   /* 나이트킵 월별 신청 현황 보드 */
   .night-board { background: #fff; border: 2px solid #d0bfff; border-radius: 10px; padding: 15px 20px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(111, 66, 193, 0.08); }
- .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+ .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; user-select: none; }
+  .night-board.collapsed { background: #faf8ff; border-style: dashed; }
+  .night-board.collapsed:hover { background: #f3f0ff; border-style: solid; border-color: #7950f2; }
   .night-board.collapsed .night-board-title { margin-bottom: 0; }
   .night-board.collapsed .night-grid { display: none; }
-  .btn-toggle-night { background: #f3f0ff; color: #5f3dc4; border: 1px solid #d0bfff; padding: 4px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-  .btn-toggle-night:hover { background: #e5dbff; }
+  .btn-toggle-night { background: #6f42c1; color: #fff; border: none; padding: 6px 13px; font-size: 12.5px; border-radius: 20px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(111, 66, 193, 0.25); transition: 0.15s; }
+  .btn-toggle-night:hover { background: #59339d; transform: translateY(-1px); }
+  .night-board:not(.collapsed) .btn-toggle-night { background: #e9ecef; color: #495057; box-shadow: none; }
+  .night-board:not(.collapsed) .btn-toggle-night:hover { background: #dee2e6; }
 
   /* 장기휴가 섹션 제목 */
   .leave-board-header { background: #fff; border: 2px solid #bae0ff; border-radius: 10px; padding: 12px 20px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0, 86, 179, 0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -290,12 +294,12 @@
   </div>
 
   <!-- 월별 나이트킵 신청 & 추첨 현황 보드 -->
-  <div id="nightBoard" class="night-board">
-    <div class="night-board-title">
-      <span>🌙 2027년 월별 나이트킵 신청 현황 (정원: 1동 1명 / 2동 1명 — 연속주 휴가 불가)</span>
+<div id="nightBoard" class="night-board collapsed">
+    <div class="night-board-title" onclick="toggleNightBoard()">
+      <span>🌙 2027년 월별 나이트킵 신청 현황 <span style="font-size:13px; font-weight:normal; color:#7950f2;">(클릭하여 1~12월 현황 펼쳐보기)</span></span>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <span style="font-size:12px; font-weight:normal; color:#666;">* 1·2차 신청 기간 중 아래 월 카드를 클릭하면 바로 선택됩니다</span>
-        <button type="button" id="toggleNightBtn" class="btn-toggle-night" onclick="toggleNightBoard()">▲ 접기(최소화)</button>
+        <span style="font-size:12px; font-weight:normal; color:#666;">* 정원: 1동 1명 / 2동 1명</span>
+        <button type="button" id="toggleNightBtn" class="btn-toggle-night">▼ 월별 현황 펼치기</button>
       </div>
     </div>
     <div id="nightGrid" class="night-grid"></div>
@@ -443,12 +447,13 @@ function toggleFormMode() {
   const partSelect = document.getElementById('part');
   const btn = document.getElementById('submitBtn');
 
-  if (type === 'NIGHT_APPLY') {
+ if (type === 'NIGHT_APPLY') {
     weekInput.style.display = 'none';
     monthSelect.style.display = 'inline-block';
     partSelect.style.display = 'inline-block';
     btn.innerText = '나이트킵 신청';
     btn.className = 'btn-night';
+    toggleNightBoard(true); // ★ 나이트 신청 선택 시 자동으로 보드 펼침
   } else if (type === 'NIGHT_WEEK') {
     weekInput.style.display = 'inline-block';
     monthSelect.style.display = 'none';
@@ -483,11 +488,14 @@ function selectNightMonth(mStr) {
 }
 
  // ▼ 여기부터 추가 ▼
-function toggleNightBoard() {
+function toggleNightBoard(forceOpen = null) {
   const board = document.getElementById('nightBoard');
   const btn = document.getElementById('toggleNightBtn');
-  const isCollapsed = board.classList.toggle('collapsed');
-  btn.innerText = isCollapsed ? '▼ 펼치기' : '▲ 접기(최소화)';
+  const isCollapsed = forceOpen === true
+    ? (board.classList.remove('collapsed'), false)
+    : board.classList.toggle('collapsed');
+
+  btn.innerText = isCollapsed ? '▼ 월별 현황 펼치기' : '▲ 접기(최소화)';
 }
  
 function setLoading(isLoading, text = '동기화 중...') {
