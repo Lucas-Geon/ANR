@@ -38,7 +38,9 @@
   button.btn-success { background: #28a745; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
   button.btn-secondary { background: #6c757d; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
   button.btn-secondary:hover { background: #5a6268; }
-
+  button.btn-move { background: #1971c2; padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+  button.btn-move:hover { background: #1864ab; }
+ 
   /* 파트 기준 필터 버튼 그룹 */
   .part-filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .part-filter-label { font-size: 12.5px; font-weight: bold; color: #495057; }
@@ -213,6 +215,25 @@
     </div>
     <div class="modal-foot">
       <button onclick="closeMyAppsModal()" style="background:#6c757d;">닫기</button>
+    </div>
+  </div>
+</div>
+
+ <!-- 4. 관리자 주차 이동 팝업 -->
+<div id="moveWeekModal" class="modal-backdrop" onclick="if(event.target===this) closeMoveModal()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>🚚 주차 이동 (관리자)</span>
+      <button class="modal-close-x" onclick="closeMoveModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="moveTargetInfo" style="background:#f1f3f5; padding:10px 12px; border-radius:6px; margin-bottom:12px; font-size:13.5px; line-height:1.5;"></div>
+      <label for="moveWeekSelect" style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">이동할 대상 주차 선택 (1~52주차):</label>
+      <select id="moveWeekSelect" style="width:100%; padding:10px; font-weight:bold; border-color:#1971c2;"></select>
+    </div>
+    <div class="modal-foot" style="display:flex; gap:8px;">
+      <button onclick="closeMoveModal()" style="background:#6c757d; flex:1;">취소</button>
+      <button onclick="confirmMoveWeek()" style="background:#1971c2; flex:2;">선택한 주차로 이동</button>
     </div>
   </div>
 </div>
@@ -680,7 +701,7 @@ function buildPersonChipHtml(item, isNightBoard = false) {
     suffix = isNight ? `(${esc(item.part)})` : '';
   }
 
-  const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
+const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
 
   let adminBtns = '';
   if (isAdmin) {
@@ -699,6 +720,11 @@ function buildPersonChipHtml(item, isNightBoard = false) {
       adminBtns = `
         ${mainBtn}
         <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
+        <button class="btn-move" onclick="event.stopPropagation(); openMoveModal(${Number(item.rowIdx)})" title="다른 주차로 이동">이동</button>
+      `;
+    } else if (isNight && item.week.includes('주차')) {
+      adminBtns = `
+        <button class="btn-move" onclick="event.stopPropagation(); openMoveModal(${Number(item.rowIdx)})" title="나이트 오프 주차 이동">이동</button>
       `;
     }
   }
@@ -1287,6 +1313,80 @@ async function updateStatus(rowIdx, status) {
   }
 }
 
+let moveTargetRowIdx = null;
+
+function openMoveModal(rowIdx) {
+  if (!isAdmin) return;
+  const item = appData.data.find(d => Number(d.rowIdx) === Number(rowIdx));
+  if (!item) return alert('대상 정보를 찾을 수 없습니다.');
+
+  moveTargetRowIdx = Number(rowIdx);
+  const realName = item.realName || item.name;
+  const typeLabel = item.type || '장기휴가';
+
+  document.getElementById('moveTargetInfo').innerHTML =
+    `• <strong>대상자:</strong> ${esc(realName)} (${esc(item.part)} / ${esc(typeLabel)})<br>` +
+    `• <strong>현재 일정:</strong> <span style="color:#0056b3; font-weight:bold;">${esc(item.week)}</span> (${esc(item.status)})`;
+
+  const sel = document.getElementById('moveWeekSelect');
+  const weeks = Object.values(WEEK_MAP_BY_MON).sort((a, b) => a.weekNum - b.weekNum);
+
+  sel.innerHTML = weeks.map(w => {
+    const p1Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '1동' && d.week.startsWith(w.label)).length;
+    const p2Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '2동' && d.week.startsWith(w.label)).length;
+    const isCurrent = item.week.startsWith(w.label);
+    const statusText = `[1동:${p1Cnt}/2, 2동:${p2Cnt}/1]${isCurrent ? ' (현재)' : ''}`;
+    return `<option value="${esc(w.label)}" ${isCurrent ? 'selected' : ''}>${esc(w.label)} ${statusText}</option>`;
+  }).join('');
+
+  document.getElementById('moveWeekModal').style.display = 'flex';
+}
+
+function closeMoveModal() {
+  moveTargetRowIdx = null;
+  document.getElementById('moveWeekModal').style.display = 'none';
+}
+
+async function confirmMoveWeek(force = false) {
+  if (!moveTargetRowIdx) return;
+  const newWeek = document.getElementById('moveWeekSelect').value;
+  if (!newWeek) return alert('이동할 주차를 선택해주세요.');
+
+  setLoading(true, '주차 이동 처리 중...');
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'MOVE_WEEK',
+        adminPw,
+        rowIdx: moveTargetRowIdx,
+        newWeek,
+        force
+      })
+    });
+    const result = await res.json();
+
+    if (!result.success && result.needForce) {
+      setLoading(false);
+      if (confirm(result.message)) {
+        return await confirmMoveWeek(true);
+      }
+      return;
+    }
+
+    alert(result.message || '이동되었습니다.');
+    if (result.success) {
+      closeMoveModal();
+      await fetchData();
+    }
+  } catch (err) {
+    alert('주차 이동 중 오류가 발생했습니다.');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
 fetchData();
 </script>
 </body>
