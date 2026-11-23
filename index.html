@@ -79,8 +79,13 @@
   @media (max-width: 1024px) { .months-wrapper { grid-template-columns: 1fr; } }
 
   .month-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; border: 1px solid #dce1e7; scroll-margin-top: 250px; }
-  .month-header { background: #2c3e50; color: #fff; padding: 10px 15px; font-size: 17px; font-weight: bold; text-align: center; letter-spacing: 1px; }
-
+  .month-header { background: #2c3e50; color: #fff; padding: 10px 15px; font-size: 17px; font-weight: bold; text-align: center; letter-spacing: 1px; position: relative; display: flex; justify-content: center; align-items: center; }
+  .month-status-badge { position: absolute; right: 12px; font-size: 12px; padding: 3px 9px; border-radius: 12px; letter-spacing: 0; font-weight: bold; }
+  .month-status-open { background: #2b8a3e; color: #fff; }
+  .month-status-closed { background: #e03131; color: #fff; }
+  .month-status-badge.admin-clickable { cursor: pointer; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.6); transition: 0.15s; }
+  .month-status-badge.admin-clickable:hover { transform: scale(1.05); }
+  
   .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8f9fa; border-bottom: 1px solid #dee2e6; text-align: center; font-weight: bold; font-size: 13px; padding: 6px 0; }
   .dow-sun { color: #e03131; }
   .dow-sat { color: #1971c2; }
@@ -379,6 +384,11 @@ function isPublicListMode() {
 
 function isAdjustMode() {
   return Boolean(appData.config && appData.config.isOpen) && !isRound3();
+}
+
+function isMonthClosed(monthNum) {
+  const closed = (appData.config && appData.config.closedMonths) || [];
+  return closed.includes(`${monthNum}월`);
 }
 
 function esc(s) {
@@ -949,17 +959,19 @@ function renderNightBoard() {
     const p2 = mList.filter(d => d.part === '2동');
 
     const isOver = (p1.length > 1 || p2.length > 1);
-    const isSelected = (canSelectNight && currentApplyType === 'NIGHT_APPLY' && currentSelectedMonth === mStr);
+    const closed = isMonthClosed(m);
+    const canSelectMonthNight = canSelectNight && !closed;
+    const isSelected = (canSelectMonthNight && currentApplyType === 'NIGHT_APPLY' && currentSelectedMonth === mStr);
 
     const card = document.createElement('div');
     card.className = [
       'night-month-card',
-      canSelectNight ? 'selectable' : '',
+      canSelectMonthNight ? 'selectable' : '',
       isSelected ? 'selected' : '',
       (isOver && isAdjustMode()) ? 'over' : ''
     ].join(' ');
 
-    if (canSelectNight) {
+    if (canSelectMonthNight) {
       card.onclick = () => selectNightMonth(mStr);
     }
 
@@ -980,7 +992,7 @@ function renderNightBoard() {
     };
 
     card.innerHTML = `
-      <div class="night-m-header">${m}월 나이트킵 ${isOver && isAdjustMode() ? '🚨추첨' : ''}</div>
+      <div class="night-m-header">${m}월 나이트킵 ${closed ? '<span style="color:#e03131; font-size:11px;">[신청종료]</span>' : (isOver && isAdjustMode() ? '🚨추첨' : '')}</div>
       <div class="night-row"><strong>1동(1):</strong> ${formatNightPart(p1, '1동')}</div>
       <div class="night-row"><strong>2동(1):</strong> ${formatNightPart(p2, '2동')}</div>
     `;
@@ -999,7 +1011,19 @@ function renderCalendars() {
     monthCard.className = 'month-card';
     monthCard.id = `month-${m + 1}`;
 
-    let html = `<div class="month-header">2027년 ${m + 1}월</div>`;
+    const monthNum = m + 1;
+    const closed = isMonthClosed(monthNum);
+    const statusText = closed ? '신청종료' : '신청중';
+    const statusClass = closed ? 'month-status-closed' : 'month-status-open';
+    const adminBadgeAttr = isAdmin
+      ? `class="month-status-badge ${statusClass} admin-clickable" onclick="toggleMonthStatus(${monthNum})" title="클릭하여 ${monthNum}월 신청 상태 변경"`
+      : `class="month-status-badge ${statusClass}"`;
+
+    let html = `<div class="month-header">
+      <span>2027년 ${monthNum}월</span>
+      <span ${adminBadgeAttr}>${statusText}</span>
+    </div>`;
+
     html += `<div class="dow-row">` + dows.map((d, i) =>
       `<div class="${i === 0 ? 'dow-sun' : i === 6 ? 'dow-sat' : ''}">${d}</div>`
     ).join('') + `</div>`;
@@ -1052,7 +1076,7 @@ function renderCalendars() {
         }
       }
 
-      const canClickWeek = isValidWeek;
+      const canClickWeek = isValidWeek && !closed;
       const isSelected = canClickWeek && (selectedWeekLabel === weekInfo.label);
       const showOver = isValidWeek && isOver && adjustMode;
       const showConfirmed = isValidWeek && isCompleted && !showOver;
@@ -1293,6 +1317,30 @@ async function adminAction(action, round = null) {
   }
 }
 
+ async function toggleMonthStatus(monthNum) {
+  if (!isAdmin) return;
+  const closed = isMonthClosed(monthNum);
+  const nextLabel = closed ? '신청중' : '신청종료';
+  if (!confirm(`2027년 ${monthNum}월 상태를 [${nextLabel}](으)로 변경하시겠습니까?`)) return;
+
+  setLoading(true, `${monthNum}월 상태 변경 중...`);
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'TOGGLE_MONTH_STATUS', adminPw, month: monthNum })
+    });
+    const result = await res.json();
+    if (!result.success) return alert(result.message);
+    await fetchData();
+  } catch (err) {
+    alert('월 상태 변경 중 오류가 발생했습니다.');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
+ 
 async function updateStatus(rowIdx, status) {
   if (!confirm(`해당 인원을 '${status}' 처리하시겠습니까?`)) return;
   setLoading(true, '상태 업데이트 중...');
