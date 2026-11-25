@@ -53,7 +53,7 @@
   .admin-pending-badge { background: #ffd43b; color: #212529; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-left: auto; }
   .loading-overlay { font-size: 13px; color: #0056b3; font-weight: bold; margin-left: 8px; }
 
-  /* 나이트킵 월별 신청 현황 보드 (기본 최소화 및 강조 토글) */
+  /* 나이트킵 월별 신청 현황 보드 */
   .night-board { background: #fff; border: 2px solid #d0bfff; border-radius: 10px; padding: 14px 20px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(111, 66, 193, 0.08); transition: 0.15s; }
   .night-board-title { font-size: 16px; font-weight: bold; color: #5f3dc4; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; user-select: none; }
   .night-board.collapsed { background: #faf8ff; border-style: dashed; }
@@ -100,12 +100,19 @@
   .week-block.disabled-week { background: #fafafa; opacity: 0.65; cursor: not-allowed; }
 
   .days-row { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; padding: 6px 0 4px 0; font-size: 14px; font-weight: bold; }
-  .day-cell { position: relative; padding: 2px 0; }
+  .day-cell { position: relative; padding: 3px 0; border-radius: 4px; transition: 0.1s; }
   .day-other-month { color: #bbb; font-weight: normal; }
   .day-sun, .day-holiday { color: #e03131; }
   .day-sat { color: #1971c2; }
   .holiday-name { display: block; font-size: 10px; font-weight: normal; color: #e03131; line-height: 1.1; margin-top: 1px; }
   .weekday-highlight { background: rgba(0, 86, 179, 0.05); border-radius: 4px; }
+
+  /* 나이트 오프 개별 날짜 선택 모드 스타일 */
+  .day-cell.night-day-selectable { cursor: pointer; }
+  .day-cell.night-day-selectable:hover { background: #e5dbff !important; color: #3b0764 !important; font-weight: bold; }
+  .day-cell.night-day-selected { background: #6f42c1 !important; color: #fff !important; font-weight: bold; box-shadow: 0 2px 5px rgba(111,66,193,0.4); }
+  .day-cell.night-day-selected .holiday-name { color: #ffe066 !important; }
+  .day-cell.night-day-range { background: #ede9fe !important; color: #4c1d95 !important; }
 
   .week-status-bar { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px 7px 10px; font-size: 12px; gap: 6px; border-top: 1px dashed #e9ecef; flex-wrap: wrap; }
   .week-tag { font-weight: bold; color: #495057; background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
@@ -224,21 +231,37 @@
   </div>
 </div>
 
- <!-- 4. 관리자 주차 이동 팝업 -->
+<!-- 4. 관리자 일정 이동 팝업 (장기휴가 주차 / 나이트 오프 시작일·일수 겸용) -->
 <div id="moveWeekModal" class="modal-backdrop" onclick="if(event.target===this) closeMoveModal()">
   <div class="modal-card">
     <div class="modal-head">
-      <span>🚚 주차 이동 (관리자)</span>
+      <span id="moveModalTitle">🚚 일정 이동 (관리자)</span>
       <button class="modal-close-x" onclick="closeMoveModal()">✕</button>
     </div>
     <div class="modal-body">
       <div id="moveTargetInfo" style="background:#f1f3f5; padding:10px 12px; border-radius:6px; margin-bottom:12px; font-size:13.5px; line-height:1.5;"></div>
-      <label for="moveWeekSelect" style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">이동할 대상 주차 선택 (1~52주차):</label>
-      <select id="moveWeekSelect" style="width:100%; padding:10px; font-weight:bold; border-color:#1971c2;"></select>
+      
+      <!-- 장기휴가용 주차 선택 -->
+      <div id="moveLeaveBox">
+        <label for="moveWeekSelect" style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">이동할 대상 주차 선택 (1~52주차):</label>
+        <select id="moveWeekSelect" style="width:100%; padding:10px; font-weight:bold; border-color:#1971c2;"></select>
+      </div>
+
+      <!-- 나이트 오프용 시작일 + 일수 선택 -->
+      <div id="moveNightBox" style="display:none;">
+        <label for="moveNightDate" style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">변경할 시작일 (2027년):</label>
+        <input type="date" id="moveNightDate" min="2027-01-01" max="2027-12-31" style="width:100%; padding:9px; font-weight:bold; border-color:#6f42c1; margin-bottom:10px;">
+        <label for="moveNightDays" style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">사용 일수 (최대 7일):</label>
+        <select id="moveNightDays" style="width:100%; padding:9px; font-weight:bold; border-color:#6f42c1;">
+          <option value="1">1일</option><option value="2">2일</option><option value="3">3일</option>
+          <option value="4">4일</option><option value="5" selected>5일</option><option value="6">6일</option>
+          <option value="7">7일</option>
+        </select>
+      </div>
     </div>
     <div class="modal-foot" style="display:flex; gap:8px;">
       <button onclick="closeMoveModal()" style="background:#6c757d; flex:1;">취소</button>
-      <button onclick="confirmMoveWeek()" style="background:#1971c2; flex:2;">선택한 주차로 이동</button>
+      <button onclick="confirmMoveWeek()" style="background:#1971c2; flex:2;">일정 변경 저장</button>
     </div>
   </div>
 </div>
@@ -294,7 +317,7 @@
         <select id="applyType" onchange="toggleFormMode()" style="font-weight:bold; border-color:#0056b3;">
           <option id="optLeave" value="LEAVE">🏖️ 장기휴가 신청</option>
           <option id="optNightApply" value="NIGHT_APPLY">🌙 나이트킵 신청 (희망 월)</option>
-          <option id="optNightWeek" value="NIGHT_WEEK" style="display:none;">🌙 나이트 당첨자 오프주 선택</option>
+          <option id="optNightWeek" value="NIGHT_WEEK" style="display:none;">🌙 나이트 당첨자 오프일 선택</option>
         </select>
 
         <select id="part">
@@ -305,8 +328,22 @@
         <input type="text" id="name" placeholder="이름 입력" maxlength="20" style="width:105px;">
         <input type="text" id="empId" placeholder="사번 5자리" maxlength="5" style="width:115px;">
 
+        <!-- 장기휴가 주차 선택칸 -->
         <input type="text" id="selectedWeek" placeholder="달력에서 원하는 주 클릭" readonly style="background:#eef5ff; border-color:#0056b3; font-weight:bold; width:200px;">
 
+        <!-- ★ 나이트 오프 시작일 + 일수(최대 7일) 선택칸 -->
+        <input type="text" id="selectedNightStartDate" placeholder="달력에서 시작일 클릭" readonly style="display:none; background:#f3f0ff; border-color:#6f42c1; font-weight:bold; width:165px;">
+        <select id="nightDurationDays" onchange="renderCalendars()" style="display:none; background:#f3f0ff; border-color:#6f42c1; font-weight:bold;">
+          <option value="1">1일</option>
+          <option value="2">2일</option>
+          <option value="3">3일</option>
+          <option value="4">4일</option>
+          <option value="5" selected>5일</option>
+          <option value="6">6일</option>
+          <option value="7">7일</option>
+        </select>
+
+        <!-- 나이트킵 희망 월 선택칸 -->
         <select id="targetMonth" onchange="renderNightBoard()" style="display:none; background:#f3f0ff; border-color:#6f42c1; font-weight:bold;">
           <option value="">-- 희망 월 선택 (또는 아래 카드 클릭) --</option>
           <option value="1월">1월 나이트킵</option><option value="2월">2월 나이트킵</option>
@@ -321,7 +358,7 @@
       </div>
 
       <div id="openModeGuide" style="display:none; font-size:13.5px; color:#c92a2a; font-weight:bold;">
-        📢 현재 전체공개(조정) 기간입니다. 경합 주차의 당첨/선정된 이름을 클릭해 붉은색으로 강조하면 관리자가 일괄 확정합니다. (나이트 당첨자는 상단에서 오프주 선택 가능)
+        📢 현재 전체공개(조정) 기간입니다. 경합 주차의 당첨/선정된 이름을 클릭해 붉은색으로 강조하면 관리자가 일괄 확정합니다. (나이트 당첨자는 상단에서 오프 시작일·일수 선택 가능)
       </div>
 
       <div class="part-filter-group">
@@ -347,8 +384,8 @@
 
   <!-- 1월~12월 달력 영역 -->
   <div style="background:#fff; border:2px solid #bac8ff; border-radius:10px; padding:13px 20px; margin-bottom:14px; box-shadow:0 2px 6px rgba(0, 86, 179, 0.08); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-    <span style="font-size:16px; font-weight:bold; color:#0056b3;">🏖️ 2027년 주차별 장기휴가 신청 현황 (정원: 1동 2명 / 2동 1명)</span>
-    <span style="font-size:12px; color:#666;">* 신청 기간 중 원하는 주차(월~금)를 클릭하면 상단 입력칸에 자동 선택됩니다</span>
+    <span style="font-size:16px; font-weight:bold; color:#0056b3;">🏖️ 2027년 주차별 장기휴가 & 🌙 나이트 오프 현황</span>
+    <span id="calendarSubGuide" style="font-size:12px; color:#666;">* 장기휴가는 원하는 주차(월~금)를, 나이트 오프는 원하는 시작일과 일수(최대 7일)를 선택합니다</span>
   </div>
   <div id="monthsContainer" class="months-wrapper"></div>
 </div>
@@ -362,9 +399,10 @@ let appData = { config: {}, data: [] };
 let isAdmin = false;
 let adminPw = '';
 let selectedWeekLabel = '';
+let selectedNightDateISO = ''; // '2027-01-27' 형식
 let currentNoticeText = '';
 let activeMoreContext = null;
-let selectedPartFilter = 'ALL'; // 'ALL' | '1동' | '2동'
+let selectedPartFilter = 'ALL';
 
 const HOLIDAYS_2027 = {
   '1-1': '신정', '2-5': '설연휴', '2-6': '설날', '2-7': '설연휴', '2-8': '대체휴일',
@@ -397,15 +435,106 @@ function esc(s) {
   ));
 }
 
+function toISODate(dt) {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function parseISODate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+function formatKoreanShortDate(iso) {
+  const dt = parseISODate(iso);
+  if (!dt) return '';
+  return `${dt.getMonth() + 1}/${dt.getDate()}`;
+}
+
 function extractWeekNum(weekStr) {
   const m = /^(\d{1,2})주차/.exec(String(weekStr || '').trim());
   return m ? Number(m[1]) : null;
 }
 
-function checkClientConsecutiveWarning(name, candidateWeek, targetType) {
-  const newWeekNum = extractWeekNum(candidateWeek);
+/**
+ * 저장된 문자열에서 실제 휴가 날짜 구간 { start: Date, end: Date } 추출
+ * - 장기휴가: "N주차 (M/D~M/D)" -> 해당 주 월요일 ~ 금요일
+ * - 나이트킵(신규): "2027-01-27|5 [1월나이트]" 또는 "1/27부터 5일 [1월나이트]"
+ * - 나이트킵(구버전 호환): "N주차 (M/D~M/D) [1월나이트]"
+ */
+function parseTargetDateRange(targetStr, type) {
+  const str = String(targetStr || '').trim();
+
+  // 신규 ISO 포맷: "2027-01-27|5 [1월나이트]"
+  const isoMatch = /^(\d{4}-\d{2}-\d{2})\|(\d+)/.exec(str);
+  if (isoMatch) {
+    const start = parseISODate(isoMatch[1]);
+    const days = Math.max(1, Number(isoMatch[2]));
+    if (start) {
+      const end = new Date(start);
+      end.setDate(end.getDate() + days - 1);
+      return { start, end, startISO: isoMatch[1], days };
+    }
+  }
+
+  // 한글 포맷: "1/27부터 5일 [1월나이트]"
+  const korMatch = /^(\d{1,2})\/(\d{1,2})부터\s*(\d+)일/.exec(str);
+  if (korMatch) {
+    const start = new Date(2027, Number(korMatch[1]) - 1, Number(korMatch[2]));
+    const days = Math.max(1, Number(korMatch[3]));
+    const end = new Date(start);
+    end.setDate(end.getDate() + days - 1);
+    return { start, end, startISO: toISODate(start), days };
+  }
+
+  // 주차 포맷: "N주차 (M/D~M/D)"
+  const wNum = extractWeekNum(str);
+  if (wNum) {
+    const start = new Date(2027, 0, 4);
+    start.setDate(start.getDate() + (wNum - 1) * 7);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 4);
+    return { start, end, startISO: toISODate(start), days: 5 };
+  }
+
+  return null;
+}
+
+/**
+ * 달력 표출용 나이트 오프 배지 텍스트 생성: "1/27부터 5일"
+ */
+function formatNightRangeLabel(targetStr) {
+  const info = parseTargetDateRange(targetStr, '나이트킵');
+  if (!info) return '';
+  return `${info.start.getMonth() + 1}/${info.start.getDate()}부터 ${info.days}일`;
+}
+
+/**
+ * 해당 나이트 오프가 어느 주차 블록에 표시되어야 하는지 주차 번호(1~52) 반환
+ */
+function getDisplayWeekNumForNight(targetStr) {
+  const info = parseTargetDateRange(targetStr, '나이트킵');
+  if (!info) return null;
+  const dt = info.start;
+  const firstMon = new Date(2027, 0, 4);
+  if (dt < firstMon) return 1; // 2027-01-01~01-03은 1주차 블록에 표출
+  const diffDays = Math.floor((dt - firstMon) / (1000 * 60 * 60 * 24));
+  const wNum = Math.floor(diffDays / 7) + 1;
+  return Math.min(52, Math.max(1, wNum));
+}
+
+/**
+ * 연속 휴가 / 일정 겹침 사전 검사 (클라이언트)
+ * 기존 일정 종료일과 신규 시작일 사이 간격이 1일 이하(겹치거나 바로 다음날 이어짐)면 차단
+ */
+function checkClientConsecutiveWarning(name, candidateRange, targetType) {
   const normName = String(name || '').replace(/\s+/g, '');
-  if (!newWeekNum || !normName || !Array.isArray(appData.data)) return null;
+  if (!candidateRange || !normName || !Array.isArray(appData.data)) return null;
+
+  const ONE_DAY = 24 * 60 * 60 * 1000;
 
   for (const item of appData.data) {
     if (item.status === '탈락') continue;
@@ -413,16 +542,26 @@ function checkClientConsecutiveWarning(name, candidateWeek, targetType) {
     if (!itemName || itemName === '***' || itemName !== normName) continue;
 
     const existingType = item.type || '장기휴가';
-    const existingWeekNum = extractWeekNum(item.week);
-    if (!existingWeekNum) continue;
+    const existingRange = parseTargetDateRange(item.week, existingType);
+    if (!existingRange) continue;
 
     const isRestrictedPair =
       (targetType === '장기휴가' && existingType === '나이트킵') ||
       (targetType === '나이트킵' && existingType === '장기휴가') ||
       (targetType === '나이트킵' && existingType === '나이트킵');
 
-    if (isRestrictedPair && Math.abs(newWeekNum - existingWeekNum) === 1) {
-      return `연속 주차 휴가 사용이 불가합니다.\n기존 [${existingType}: ${item.week}] 일정과 연속된 주차(${candidateWeek})는 선택할 수 없습니다.`;
+    if (!isRestrictedPair) continue;
+
+    // 두 구간이 겹치거나 바로 다음날 연속(차이 <= 1일)인지 확인
+    const isOverlappingOrAdjacent =
+      candidateRange.start.getTime() <= existingRange.end.getTime() + ONE_DAY &&
+      existingRange.start.getTime() <= candidateRange.end.getTime() + ONE_DAY;
+
+    if (isOverlappingOrAdjacent) {
+      const existingLabel = existingType === '나이트킵'
+        ? (formatNightRangeLabel(item.week) || item.week)
+        : item.week;
+      return `연속 휴가 또는 일정 중복 사용이 불가합니다.\n기존 [${existingType}: ${existingLabel}] 일정과 겹치거나 연속된 날짜는 선택할 수 없습니다.`;
     }
   }
   return null;
@@ -485,31 +624,40 @@ function updateApplyTypeOptions(round) {
 function toggleFormMode() {
   const type = document.getElementById('applyType').value;
   const weekInput = document.getElementById('selectedWeek');
+  const nightStartInput = document.getElementById('selectedNightStartDate');
+  const nightDaysSelect = document.getElementById('nightDurationDays');
   const monthSelect = document.getElementById('targetMonth');
   const partSelect = document.getElementById('part');
   const btn = document.getElementById('submitBtn');
 
   if (type === 'NIGHT_APPLY') {
     weekInput.style.display = 'none';
+    nightStartInput.style.display = 'none';
+    nightDaysSelect.style.display = 'none';
     monthSelect.style.display = 'inline-block';
     partSelect.style.display = 'inline-block';
     btn.innerText = '나이트킵 신청';
     btn.className = 'btn-night';
     toggleNightBoard(true);
   } else if (type === 'NIGHT_WEEK') {
-    weekInput.style.display = 'inline-block';
+    weekInput.style.display = 'none';
+    nightStartInput.style.display = 'inline-block';
+    nightDaysSelect.style.display = 'inline-block';
     monthSelect.style.display = 'none';
     partSelect.style.display = 'none';
-    btn.innerText = '나이트 오프주 확정';
+    btn.innerText = '나이트 오프 확정';
     btn.className = 'btn-night';
   } else {
     weekInput.style.display = 'inline-block';
+    nightStartInput.style.display = 'none';
+    nightDaysSelect.style.display = 'none';
     monthSelect.style.display = 'none';
     partSelect.style.display = 'inline-block';
     btn.innerText = isRound3() ? '장기휴가 즉시확정 신청' : '장기휴가 신청';
     btn.className = '';
   }
   renderNightBoard();
+  renderCalendars();
 }
 
 function selectNightMonth(mStr) {
@@ -612,13 +760,13 @@ async function fetchData() {
     const round = String(appData.config.round);
 
     if (round === 'NIGHT_WEEK') {
-      roundBadge.innerText = '🌙 나이트킵 당첨자 오프주 선택 기간 (연속주 불가)';
+      roundBadge.innerText = '🌙 나이트킵 당첨자 오프일 선택 기간 (연속 불가)';
       roundBadge.className = 'badge badge-night';
     } else if (round === '2') {
-      roundBadge.innerText = '2차 신청 기간 (장기+나이트+오프주 선택 가능)';
+      roundBadge.innerText = '2차 신청 기간 (장기+나이트+오프일 선택 가능)';
       roundBadge.className = 'badge badge-round';
     } else if (round === '3') {
-      roundBadge.innerText = '3차 상시 선착순 신청 (나이트 오프주 선택 가능)';
+      roundBadge.innerText = '3차 상시 선착순 신청 (나이트 오프일 선택 가능)';
       roundBadge.className = 'badge badge-round';
     } else {
       roundBadge.innerText = '1차 신청 기간 (장기+나이트, 추첨제)';
@@ -701,17 +849,22 @@ function buildPersonChipHtml(item, isNightBoard = false) {
   }
 
   let suffix = '';
+  const nightRangeLabel = isNight ? formatNightRangeLabel(item.week) : '';
+
   if (isNightBoard) {
-    if (item.week.includes('주차')) {
-      suffix = `(${esc(item.week.split(' ')[0])})`;
+    if (nightRangeLabel) {
+      suffix = `(${esc(nightRangeLabel)})`;
     } else if (isConfirmed) {
-      suffix = '(확정·주차미정)';
+      suffix = '(확정·일정미정)';
     }
   } else {
-    suffix = isNight ? `(${esc(item.part)})` : '';
+    // 달력 나이트 오프 영역 표출: "이름(소속) O/OO부터 5일"
+    suffix = isNight
+      ? `(${esc(item.part)})${nightRangeLabel ? ' ' + esc(nightRangeLabel) : ''}`
+      : '';
   }
 
-const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
+  const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${Number(item.rowIdx)})" title="클릭 시 붉은색 강조 표시/해제"` : '';
 
   let adminBtns = '';
   if (isAdmin) {
@@ -732,9 +885,9 @@ const clickAttr = adjustMode ? `onclick="event.stopPropagation(); toggleFlag(${N
         <button class="btn-danger" onclick="event.stopPropagation(); updateStatus(${Number(item.rowIdx)}, '탈락')">제외</button>
         <button class="btn-move" onclick="event.stopPropagation(); openMoveModal(${Number(item.rowIdx)})" title="다른 주차로 이동">이동</button>
       `;
-    } else if (isNight && item.week.includes('주차')) {
+    } else if (isNight && nightRangeLabel) {
       adminBtns = `
-        <button class="btn-move" onclick="event.stopPropagation(); openMoveModal(${Number(item.rowIdx)})" title="나이트 오프 주차 이동">이동</button>
+        <button class="btn-move" onclick="event.stopPropagation(); openMoveModal(${Number(item.rowIdx)})" title="나이트 오프 일정 변경">이동</button>
       `;
     }
   }
@@ -782,7 +935,7 @@ async function toggleFlag(rowIdx) {
 
     let sameGroup = [];
     if (isNight) {
-      const mMatch = target.week.match(/(\d{1,2}월)/);
+      const mMatch = target.week.match(/\[(\d{1,2}월)나이트\]/) || target.week.match(/^(\d{1,2}월)$/);
       const monthKey = mMatch ? mMatch[1] : target.week;
       sameGroup = appData.data.filter(d =>
         d.status !== '탈락' &&
@@ -863,6 +1016,15 @@ function closeMyAppsModal() {
   document.getElementById('myAppsModal').style.display = 'none';
 }
 
+function formatReadableTarget(rawTarget, type) {
+  if (type === '나이트킵') {
+    const label = formatNightRangeLabel(rawTarget);
+    const mMatch = String(rawTarget || '').match(/\[(\d{1,2}월)나이트\]/);
+    if (label && mMatch) return `${label} [${mMatch[1]} 나이트킵]`;
+  }
+  return rawTarget;
+}
+
 async function searchMyApps() {
   const name = document.getElementById('checkName').value.trim();
   const empId = document.getElementById('checkEmpId').value.trim();
@@ -901,7 +1063,7 @@ async function searchMyApps() {
       return `<div class="my-app-item">
         <div class="my-app-info">
           <div><strong>[${esc(app.type)}]</strong> ${esc(app.part)} · ${esc(app.round)}차</div>
-          <div style="color:#0056b3; font-weight:bold;">${esc(app.target)}</div>
+          <div style="color:#0056b3; font-weight:bold;">${esc(formatReadableTarget(app.target, app.type))}</div>
           <div>상태: <span class="status-pill">${esc(app.status)}</span></div>
         </div>
         <div>${delBtn}</div>
@@ -1005,6 +1167,18 @@ function renderCalendars() {
   container.innerHTML = '';
   const dows = ['일', '월', '화', '수', '목', '금', '토'];
   const adjustMode = isAdjustMode();
+  const isNightDayMode = document.getElementById('applyType').value === 'NIGHT_WEEK';
+
+  // 나이트 오프 미리보기 범위 계산
+  let previewStart = null, previewEnd = null;
+  if (isNightDayMode && selectedNightDateISO) {
+    previewStart = parseISODate(selectedNightDateISO);
+    const dur = Number(document.getElementById('nightDurationDays').value || 5);
+    if (previewStart) {
+      previewEnd = new Date(previewStart);
+      previewEnd.setDate(previewEnd.getDate() + dur - 1);
+    }
+  }
 
   for (let m = 0; m < 12; m++) {
     const monthCard = document.createElement('div');
@@ -1049,12 +1223,16 @@ function renderCalendars() {
       let p1Leaves = [], p2Leaves = [], nightOffList = [], isOver = false, isCompleted = false;
 
       if (isValidWeek) {
-        const weekApps = appData.data.filter(d => d.status !== '탈락' && d.week.startsWith(weekInfo.label));
-        const leaveApps = weekApps.filter(d => d.type !== '나이트킵');
-        nightOffList = weekApps.filter(d => d.type === '나이트킵');
+        const weekApps = appData.data.filter(d => d.status !== '탈락' && d.type !== '나이트킵' && d.week.startsWith(weekInfo.label));
+        p1Leaves = weekApps.filter(d => d.part === '1동');
+        p2Leaves = weekApps.filter(d => d.part === '2동');
 
-        p1Leaves = leaveApps.filter(d => d.part === '1동');
-        p2Leaves = leaveApps.filter(d => d.part === '2동');
+        // 해당 주차 블록에 속하는 나이트 오프 필터링
+        nightOffList = appData.data.filter(d => {
+          if (d.status === '탈락' || d.type !== '나이트킵') return false;
+          const dispWeekNum = getDisplayWeekNumForNight(d.week);
+          return dispWeekNum === weekInfo.weekNum;
+        });
 
         const p1ConfirmedCount = p1Leaves.filter(d => d.status === '확정').length;
         const p2ConfirmedCount = p2Leaves.filter(d => d.status === '확정').length;
@@ -1076,14 +1254,14 @@ function renderCalendars() {
         }
       }
 
-      const canClickWeek = isValidWeek && !closed;
+      const canClickWeek = isValidWeek && !closed && !isNightDayMode;
       const isSelected = canClickWeek && (selectedWeekLabel === weekInfo.label);
       const showOver = isValidWeek && isOver && adjustMode;
       const showConfirmed = isValidWeek && isCompleted && !showOver;
 
       const blockClass = [
         'week-block',
-        canClickWeek ? 'selectable' : (isValidWeek ? '' : 'disabled-week'),
+        canClickWeek ? 'selectable' : ((!isValidWeek && !isNightDayMode) ? 'disabled-week' : ''),
         isSelected ? 'selected' : '',
         showOver ? 'over-limit' : (showConfirmed ? 'confirmed-week' : '')
       ].join(' ');
@@ -1095,14 +1273,31 @@ function renderCalendars() {
         const hKey = `${dt.getMonth()+1}-${dt.getDate()}`;
         const holiday = HOLIDAYS_2027[hKey];
         const isWeekday = idx >= 1 && idx <= 5 && isValidWeek;
+        const iso = toISODate(dt);
+        const is2027 = dt.getFullYear() === 2027;
+        const dayMonthClosed = isMonthClosed(dt.getMonth() + 1);
 
         let cls = 'day-cell';
         if (!isCurrentMonth) cls += ' day-other-month';
         else if (idx === 0 || holiday) cls += ' day-sun';
         else if (idx === 6) cls += ' day-sat';
-        if (isWeekday) cls += ' weekday-highlight';
+        if (isWeekday && !isNightDayMode) cls += ' weekday-highlight';
 
-        return `<div class="${cls}">
+        let dayClickAttr = '';
+        if (isNightDayMode && isCurrentMonth && is2027 && !dayMonthClosed) {
+          cls += ' night-day-selectable';
+          dayClickAttr = `onclick="event.stopPropagation(); selectNightStartDate('${iso}')" title="${dt.getMonth()+1}/${dt.getDate()}을 나이트 오프 시작일로 선택"`;
+        }
+
+        if (isNightDayMode && previewStart && previewEnd && isCurrentMonth) {
+          if (iso === selectedNightDateISO) {
+            cls += ' night-day-selected';
+          } else if (dt > previewStart && dt <= previewEnd) {
+            cls += ' night-day-range';
+          }
+        }
+
+        return `<div class="${cls}" ${dayClickAttr}>
           ${dt.getDate()}
           ${holiday && isCurrentMonth ? `<span class="holiday-name">${holiday}</span>` : ''}
         </div>`;
@@ -1189,6 +1384,19 @@ function selectWeek(label) {
   }
 }
 
+function selectNightStartDate(iso) {
+  selectedNightDateISO = iso;
+  const dt = parseISODate(iso);
+  if (dt) {
+    document.getElementById('selectedNightStartDate').value = `${dt.getMonth() + 1}월 ${dt.getDate()}일부터`;
+  }
+  renderCalendars();
+
+  if (window.innerWidth <= 768) {
+    document.getElementById('topFormArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
 async function submitForm() {
   const applyType = document.getElementById('applyType').value;
   const part = document.getElementById('part').value;
@@ -1196,6 +1404,7 @@ async function submitForm() {
   const empId = document.getElementById('empId').value.trim();
   const week = document.getElementById('selectedWeek').value;
   const targetMonth = document.getElementById('targetMonth').value;
+  const durationDays = Number(document.getElementById('nightDurationDays').value || 5);
 
   if (!name || !empId) return alert('이름과 사번을 입력해주세요.');
   if (empId.length !== 5) return alert('사번은 정확히 5글자로 입력해주세요.');
@@ -1205,7 +1414,8 @@ async function submitForm() {
 
   if (applyType === 'LEAVE') {
     if (!week) return alert('달력에서 원하는 주(월~금)를 클릭해주세요.');
-    const consecErr = checkClientConsecutiveWarning(name, week, '장기휴가');
+    const candidateRange = parseTargetDateRange(week, '장기휴가');
+    const consecErr = checkClientConsecutiveWarning(name, candidateRange, '장기휴가');
     if (consecErr) return alert(consecErr);
 
     payload = { action: 'APPLY_LEAVE', part, empId, name, week };
@@ -1223,15 +1433,33 @@ async function submitForm() {
                  `• 희망 월: ${targetMonth} 나이트킵\n\n` +
                  `신청하신 곳이 '${part}' 해당이 맞습니까?\n확인 버튼을 누르면 최종 접수됩니다.`;
   } else if (applyType === 'NIGHT_WEEK') {
-    if (!week) return alert('달력에서 나이트 오프로 사용할 주(월~금)를 클릭해주세요.');
-    const consecErr = checkClientConsecutiveWarning(name, week, '나이트킵');
+    if (!selectedNightDateISO) return alert('달력에서 나이트 오프 시작일을 클릭해주세요.');
+    if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 7) {
+      return alert('사용 일수는 1일~7일 사이로 선택해주세요.');
+    }
+
+    const startDt = parseISODate(selectedNightDateISO);
+    const endDt = new Date(startDt);
+    endDt.setDate(endDt.getDate() + durationDays - 1);
+
+    const candidateRange = { start: startDt, end: endDt, startISO: selectedNightDateISO, days: durationDays };
+    const consecErr = checkClientConsecutiveWarning(name, candidateRange, '나이트킵');
     if (consecErr) return alert(consecErr);
 
-    payload = { action: 'SELECT_NIGHT_WEEK', empId, name, week };
-    confirmMsg = `[나이트킵 오프주 최종 확정 확인]\n\n` +
+    const shortStart = `${startDt.getMonth() + 1}/${startDt.getDate()}`;
+    const shortEnd = `${endDt.getMonth() + 1}/${endDt.getDate()}`;
+
+    payload = {
+      action: 'SELECT_NIGHT_WEEK',
+      empId,
+      name,
+      startDate: selectedNightDateISO,
+      days: durationDays
+    };
+    confirmMsg = `[나이트킵 오프일 최종 확정 확인]\n\n` +
                  `• 신청자: ${name} (${empId})\n` +
-                 `• 선택 일정: ${week}\n\n` +
-                 `해당 주차로 최종 등록하시겠습니까?`;
+                 `• 선택 일정: ${shortStart}부터 ${durationDays}일 (${shortStart}~${shortEnd})\n\n` +
+                 `해당 일정으로 최종 등록하시겠습니까?`;
   }
 
   if (!confirm(confirmMsg)) return;
@@ -1252,7 +1480,10 @@ async function submitForm() {
       document.getElementById('name').value = '';
       document.getElementById('empId').value = '';
       selectedWeekLabel = '';
+      selectedNightDateISO = '';
       document.getElementById('selectedWeek').value = '';
+      document.getElementById('selectedNightStartDate').value = '';
+      document.getElementById('nightDurationDays').value = '5';
       document.getElementById('targetMonth').value = '';
       await fetchData();
     }
@@ -1317,7 +1548,7 @@ async function adminAction(action, round = null) {
   }
 }
 
- async function toggleMonthStatus(monthNum) {
+async function toggleMonthStatus(monthNum) {
   if (!isAdmin) return;
   const closed = isMonthClosed(monthNum);
   const nextLabel = closed ? '신청중' : '신청종료';
@@ -1362,6 +1593,7 @@ async function updateStatus(rowIdx, status) {
 }
 
 let moveTargetRowIdx = null;
+let moveTargetIsNight = false;
 
 function openMoveModal(rowIdx) {
   if (!isAdmin) return;
@@ -1369,49 +1601,73 @@ function openMoveModal(rowIdx) {
   if (!item) return alert('대상 정보를 찾을 수 없습니다.');
 
   moveTargetRowIdx = Number(rowIdx);
+  moveTargetIsNight = (item.type === '나이트킵');
   const realName = item.realName || item.name;
   const typeLabel = item.type || '장기휴가';
 
+  document.getElementById('moveModalTitle').innerText = moveTargetIsNight ? '🚚 나이트 오프 일정 변경 (관리자)' : '🚚 주차 이동 (관리자)';
   document.getElementById('moveTargetInfo').innerHTML =
     `• <strong>대상자:</strong> ${esc(realName)} (${esc(item.part)} / ${esc(typeLabel)})<br>` +
-    `• <strong>현재 일정:</strong> <span style="color:#0056b3; font-weight:bold;">${esc(item.week)}</span> (${esc(item.status)})`;
+    `• <strong>현재 일정:</strong> <span style="color:#0056b3; font-weight:bold;">${esc(formatReadableTarget(item.week, typeLabel))}</span> (${esc(item.status)})`;
 
-  const sel = document.getElementById('moveWeekSelect');
-  const weeks = Object.values(WEEK_MAP_BY_MON).sort((a, b) => a.weekNum - b.weekNum);
+  if (moveTargetIsNight) {
+    document.getElementById('moveLeaveBox').style.display = 'none';
+    document.getElementById('moveNightBox').style.display = 'block';
+    const rangeInfo = parseTargetDateRange(item.week, '나이트킵');
+    document.getElementById('moveNightDate').value = rangeInfo ? rangeInfo.startISO : '2027-01-04';
+    document.getElementById('moveNightDays').value = rangeInfo ? String(rangeInfo.days) : '5';
+  } else {
+    document.getElementById('moveLeaveBox').style.display = 'block';
+    document.getElementById('moveNightBox').style.display = 'none';
+    const sel = document.getElementById('moveWeekSelect');
+    const weeks = Object.values(WEEK_MAP_BY_MON).sort((a, b) => a.weekNum - b.weekNum);
 
-  sel.innerHTML = weeks.map(w => {
-    const p1Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '1동' && d.week.startsWith(w.label)).length;
-    const p2Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '2동' && d.week.startsWith(w.label)).length;
-    const isCurrent = item.week.startsWith(w.label);
-    const statusText = `[1동:${p1Cnt}/2, 2동:${p2Cnt}/1]${isCurrent ? ' (현재)' : ''}`;
-    return `<option value="${esc(w.label)}" ${isCurrent ? 'selected' : ''}>${esc(w.label)} ${statusText}</option>`;
-  }).join('');
+    sel.innerHTML = weeks.map(w => {
+      const p1Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '1동' && d.week.startsWith(w.label)).length;
+      const p2Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '2동' && d.week.startsWith(w.label)).length;
+      const isCurrent = item.week.startsWith(w.label);
+      const statusText = `[1동:${p1Cnt}/2, 2동:${p2Cnt}/1]${isCurrent ? ' (현재)' : ''}`;
+      return `<option value="${esc(w.label)}" ${isCurrent ? 'selected' : ''}>${esc(w.label)} ${statusText}</option>`;
+    }).join('');
+  }
 
   document.getElementById('moveWeekModal').style.display = 'flex';
 }
 
 function closeMoveModal() {
   moveTargetRowIdx = null;
+  moveTargetIsNight = false;
   document.getElementById('moveWeekModal').style.display = 'none';
 }
 
 async function confirmMoveWeek(force = false) {
   if (!moveTargetRowIdx) return;
-  const newWeek = document.getElementById('moveWeekSelect').value;
-  if (!newWeek) return alert('이동할 주차를 선택해주세요.');
 
-  setLoading(true, '주차 이동 처리 중...');
+  let bodyPayload = {
+    action: 'MOVE_WEEK',
+    adminPw,
+    rowIdx: moveTargetRowIdx,
+    force
+  };
+
+  if (moveTargetIsNight) {
+    const startDate = document.getElementById('moveNightDate').value;
+    const days = Number(document.getElementById('moveNightDays').value || 5);
+    if (!startDate) return alert('변경할 시작일을 선택해주세요.');
+    bodyPayload.startDate = startDate;
+    bodyPayload.days = days;
+  } else {
+    const newWeek = document.getElementById('moveWeekSelect').value;
+    if (!newWeek) return alert('이동할 주차를 선택해주세요.');
+    bodyPayload.newWeek = newWeek;
+  }
+
+  setLoading(true, '일정 이동 처리 중...');
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'MOVE_WEEK',
-        adminPw,
-        rowIdx: moveTargetRowIdx,
-        newWeek,
-        force
-      })
+      body: JSON.stringify(bodyPayload)
     });
     const result = await res.json();
 
@@ -1423,20 +1679,20 @@ async function confirmMoveWeek(force = false) {
       return;
     }
 
-    alert(result.message || '이동되었습니다.');
+    alert(result.message || '변경되었습니다.');
     if (result.success) {
       closeMoveModal();
       await fetchData();
     }
   } catch (err) {
-    alert('주차 이동 중 오류가 발생했습니다.');
+    alert('일정 이동 중 오류가 발생했습니다.');
     console.error(err);
   } finally {
     setLoading(false);
   }
 }
+
 fetchData();
- // 우클릭 및 개발자 도구 단축키(F12, Ctrl+Shift+I, Ctrl+U) 방지
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
   if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) || (e.ctrlKey && e.key.toUpperCase() === 'U')) {
