@@ -1149,7 +1149,7 @@ function openUserModifyModal(rowIdx) {
   };
 
   const warnText = (!isRound3() && app.status === '확정' && userModifyContext.mode !== 'NIGHT_OFF')
-    ? `<div style="margin-top:5px; color:#c92a2a; font-size:12px; font-weight:bold;">⚠️ 확정 일정을 다른 주차/월로 변경하면 기존 확정은 해제되고 '신청중(추첨 대상)'으로 전환됩니다.</div>`
+    ? `<div style="margin-top:5px; color:#c92a2a; font-size:14px; font-weight:bold;">⚠️ 확정 일정을 다른 주차/월로 변경하면 기존 확정은 해제되고 '신청중(추첨 대상)'으로 전환됩니다.</div>`
     : '';
 
   document.getElementById('userModTargetInfo').innerHTML =
