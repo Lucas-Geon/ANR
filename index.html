@@ -1144,12 +1144,18 @@ function openUserModifyModal(rowIdx) {
     rowIdx: Number(rowIdx),
     part: app.part,
     type: app.type,
+    status: app.status,
     mode: !isNight ? 'LEAVE' : (hasNightOff ? 'NIGHT_OFF' : 'NIGHT_MONTH')
   };
 
+  const warnText = (!isRound3() && app.status === '확정' && userModifyContext.mode !== 'NIGHT_OFF')
+    ? `<div style="margin-top:5px; color:#c92a2a; font-size:12px; font-weight:bold;">⚠️ 확정 일정을 다른 주차/월로 변경하면 기존 확정은 해제되고 '신청중(추첨 대상)'으로 전환됩니다.</div>`
+    : '';
+
   document.getElementById('userModTargetInfo').innerHTML =
     `• <strong>구분:</strong> ${esc(app.type)} (${esc(app.part)} / ${esc(app.status)})<br>` +
-    `• <strong>현재 일정:</strong> <span style="color:#0056b3; font-weight:bold;">${esc(formatReadableTarget(app.target, app.type))}</span>`;
+    `• <strong>현재 일정:</strong> <span style="color:#0056b3; font-weight:bold;">${esc(formatReadableTarget(app.target, app.type))}</span>` +
+    warnText;
 
   document.getElementById('userModLeaveBox').style.display = 'none';
   document.getElementById('userModNightMonthBox').style.display = 'none';
@@ -1164,15 +1170,19 @@ function openUserModifyModal(rowIdx) {
     sel.innerHTML = weeks.map(w => {
       const mNum = w.mon.getMonth() + 1;
       const closed = isMonthClosed(mNum);
-      const cnt = appData.data.filter(d =>
+      const weekLeaves = appData.data.filter(d =>
         d.status !== '탈락' && d.status !== '취소됨' &&
         (d.type || '장기휴가') === '장기휴가' &&
         d.part === app.part && d.week.startsWith(w.label)
-      ).length;
+      );
+      const cnt = weekLeaves.length;
+      const confirmedCnt = weekLeaves.filter(d => d.status === '확정').length;
       const isCurrent = app.target.startsWith(w.label);
-      const isFull = !isCurrent && cnt >= cap;
-      const tag = closed ? '[신청종료]' : (isFull ? '[정원초과]' : `[${cnt}/${cap}명]`);
-      return `<option value="${esc(w.label)}" ${isCurrent ? 'selected' : ''} ${(closed || isFull) ? 'disabled' : ''}>${esc(w.label)} ${tag}</option>`;
+
+      // 3차 선착순이면 전체 정원 마감 시 차단 / 1·2차면 확정 인원 마감 시 차단(경합 주차는 추첨 진입 허용)
+      const isBlocked = !isCurrent && (isRound3() ? (cnt >= cap) : (confirmedCnt >= cap));
+      const tag = closed ? '[신청종료]' : (isBlocked ? '[확정마감]' : (cnt >= cap ? `[${cnt}/${cap}명·경합]` : `[${cnt}/${cap}명]`));
+      return `<option value="${esc(w.label)}" ${isCurrent ? 'selected' : ''} ${(closed || isBlocked) ? 'disabled' : ''}>${esc(w.label)} ${tag}</option>`;
     }).join('');
   } else if (userModifyContext.mode === 'NIGHT_MONTH') {
     document.getElementById('userModNightMonthBox').style.display = 'block';
@@ -1181,15 +1191,17 @@ function openUserModifyModal(rowIdx) {
     for (let m = 1; m <= 12; m++) {
       const mStr = `${m}월`;
       const closed = isMonthClosed(m);
-      const cnt = appData.data.filter(d =>
+      const monthNights = appData.data.filter(d =>
         d.status !== '탈락' && d.status !== '취소됨' &&
         d.type === '나이트킵' && d.part === app.part &&
         (d.week === mStr || d.week.includes(`[${mStr}나이트]`))
-      ).length;
+      );
+      const cnt = monthNights.length;
+      const confirmedCnt = monthNights.filter(d => d.status === '확정').length;
       const isCurrent = app.target === mStr;
-      const isFull = !isCurrent && cnt >= 1;
-      const tag = closed ? '[신청종료]' : (isFull ? '[정원초과]' : `[${cnt}/1명]`);
-      opts += `<option value="${mStr}" ${isCurrent ? 'selected' : ''} ${(closed || isFull) ? 'disabled' : ''}>${mStr} 나이트킵 ${tag}</option>`;
+      const isBlocked = !isCurrent && (confirmedCnt >= 1);
+      const tag = closed ? '[신청종료]' : (isBlocked ? '[확정마감]' : (cnt >= 1 ? `[${cnt}/1명·경합]` : `[${cnt}/1명]`));
+      opts += `<option value="${mStr}" ${isCurrent ? 'selected' : ''} ${(closed || isBlocked) ? 'disabled' : ''}>${mStr} 나이트킵 ${tag}</option>`;
     }
     sel.innerHTML = opts;
   } else {
