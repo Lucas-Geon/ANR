@@ -364,6 +364,7 @@
         <select id="part">
           <option value="1동">1동 (장기 2명 / 나이트 1명)</option>
           <option value="2동">2동 (장기 1명 / 나이트 1명)</option>
+          <option value="2동(sub)">2동(sub) (서브나이트 1명)</option>
         </select>
 
         <input type="text" id="name" placeholder="이름 입력" maxlength="20" style="width:105px;">
@@ -777,7 +778,7 @@ function updateAdminPendingCount() {
   const list = Array.isArray(appData.data) ? appData.data : [];
   const pendingList = list.filter(d => d.status === '신청중');
   const leaveCnt = pendingList.filter(d => (d.type || '장기휴가') === '장기휴가').length;
-  const nightCnt = pendingList.filter(d => d.type === '나이트킵').length;
+  const nightCnt = pendingList.filter(d => d.type === '나이트킵' || d.type === '서브나이트킵').length;
 
   badge.innerText = `📋 총 ${pendingList.length}건의 신규신청이 있습니다 (장기 ${leaveCnt} / 나이트 ${nightCnt})`;
 }
@@ -866,7 +867,8 @@ function renderChipsWithLimit(list, category, key, part, isNightBoard = false) {
 function buildPersonChipHtml(item, isNightBoard = false) {
   const adjustMode = isAdjustMode();
   const displayName = esc(isAdmin ? (item.realName || item.name) : item.name);
-  const isNight = item.type === '나이트킵';
+  const isNight = item.type === '나이트킵' || item.type === '서브나이트킵';
+  const isSubNight = item.type === '서브나이트킵';
   const isConfirmed = item.status === '확정';
   const isFlagged = Boolean(item.flagged) && !isConfirmed;
 
@@ -892,8 +894,10 @@ function buildPersonChipHtml(item, isNightBoard = false) {
   let suffix = '';
   const nightRangeLabel = isNight ? formatNightRangeLabel(item.week) : '';
 
-  if (isNightBoard) {
-    if (nightRangeLabel) {
+if (isNightBoard) {
+    if (isSubNight) {
+      suffix = ''; // 서브나이트는 오프 일정이 없으므로 이름만 표출
+    } else if (nightRangeLabel) {
       suffix = `(${esc(nightRangeLabel)})`;
     } else if (isConfirmed) {
       suffix = '(확정·일정미정)';
@@ -941,9 +945,12 @@ function openMoreModal(category, key, part) {
   let fullList = [];
   let title = '';
 
-  if (category === 'LEAVE') {
-    fullList = appData.data.filter(d => d.status !== '탈락' && d.status !== '취소됨' && d.type !== '나이트킵' && d.week.startsWith(key) && d.part === part);
+if (category === 'LEAVE') {
+    fullList = appData.data.filter(d => d.status !== '탈락' && d.status !== '취소됨' && (d.type || '장기휴가') === '장기휴가' && d.week.startsWith(key) && d.part === part);
     title = `📋 ${key} - ${part} 전체 신청자 (${fullList.length}명)`;
+  } else if (category === 'SUB_NIGHT') {
+    fullList = appData.data.filter(d => d.type === '서브나이트킵' && d.status !== '탈락' && d.status !== '취소됨' && d.week === key && d.part === part);
+    title = `🌙 ${key} 2동 서브나이트킵 전체 신청자 (${fullList.length}명)`;
   } else {
     fullList = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락' && d.status !== '취소됨' && (d.week === key || d.week.includes(`[${key}나이트]`)) && d.part === part);
     title = `🌙 ${key} 나이트킵 - ${part} 전체 신청자 (${fullList.length}명)`;
@@ -970,8 +977,8 @@ async function toggleFlag(rowIdx) {
   if (!isAdjustMode()) return;
 
   const target = appData.data.find(d => Number(d.rowIdx) === Number(rowIdx));
-  if (target && !target.flagged && target.status !== '확정') {
-    const isNight = target.type === '나이트킵';
+if (target && !target.flagged && target.status !== '확정') {
+    const isNight = target.type === '나이트킵' || target.type === '서브나이트킵';
     const cap = isNight ? 1 : (target.part === '1동' ? 2 : 1);
 
     let sameGroup = [];
@@ -980,7 +987,7 @@ async function toggleFlag(rowIdx) {
       const monthKey = mMatch ? mMatch[1] : target.week;
       sameGroup = appData.data.filter(d =>
         d.status !== '탈락' && d.status !== '취소됨' &&
-        d.type === '나이트킵' &&
+        d.type === target.type &&
         d.part === target.part &&
         (d.week === monthKey || d.week.includes(`[${monthKey}나이트]`))
       );
@@ -1137,7 +1144,8 @@ function openUserModifyModal(rowIdx) {
   const app = currentMyAppsList.find(a => Number(a.rowIdx) === Number(rowIdx));
   if (!app) return alert('내역을 찾을 수 없습니다.');
 
-  const isNight = app.type === '나이트킵';
+const isNight = app.type === '나이트킵';
+  const isSubNight = app.type === '서브나이트킵';
   const hasNightOff = isNight && (/^\d{4}-\d{2}-\d{2}\|/.test(app.target) || app.target.includes('주차'));
 
   userModifyContext = {
@@ -1145,7 +1153,7 @@ function openUserModifyModal(rowIdx) {
     part: app.part,
     type: app.type,
     status: app.status,
-    mode: !isNight ? 'LEAVE' : (hasNightOff ? 'NIGHT_OFF' : 'NIGHT_MONTH')
+    mode: (!isNight && !isSubNight) ? 'LEAVE' : (hasNightOff ? 'NIGHT_OFF' : 'NIGHT_MONTH')
   };
 
   const warnText = (!isRound3() && app.status === '확정' && userModifyContext.mode !== 'NIGHT_OFF')
@@ -1193,7 +1201,7 @@ function openUserModifyModal(rowIdx) {
       const closed = isMonthClosed(m);
       const monthNights = appData.data.filter(d =>
         d.status !== '탈락' && d.status !== '취소됨' &&
-        d.type === '나이트킵' && d.part === app.part &&
+        d.type === app.type && d.part === app.part &&
         (d.week === mStr || d.week.includes(`[${mStr}나이트]`))
       );
       const cnt = monthNights.length;
@@ -1211,7 +1219,7 @@ function openUserModifyModal(rowIdx) {
     document.getElementById('userModNightDays').value = rangeInfo ? String(rangeInfo.days) : '5';
   }
 
-  document.getElementById('userModifyModal').style.display = 'flex';
+document.getElementById('userModifyModal').style.display = 'flex';
 }
 
 function closeUserModifyModal() {
@@ -1301,7 +1309,7 @@ function renderNightBoard() {
   const grid = document.getElementById('nightGrid');
   grid.innerHTML = '';
 
-  const nightApps = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락' && d.status !== '취소됨');
+  const nightApps = appData.data.filter(d => (d.type === '나이트킵' || d.type === '서브나이트킵') && d.status !== '탈락' && d.status !== '취소됨');
   const round = String(appData.config.round || '1');
   const isOpen = Boolean(appData.config.isOpen);
   const publicList = isPublicListMode();
@@ -1311,11 +1319,12 @@ function renderNightBoard() {
 
   for (let m = 1; m <= 12; m++) {
     const mStr = `${m}월`;
-    const mList = nightApps.filter(d => d.week === mStr || d.week.includes(`[${mStr}나이트]`));
+    const mList = nightApps.filter(d => d.type === '나이트킵' && (d.week === mStr || d.week.includes(`[${mStr}나이트]`)));
     const p1 = mList.filter(d => d.part === '1동');
     const p2 = mList.filter(d => d.part === '2동');
+    const p2Sub = nightApps.filter(d => d.type === '서브나이트킵' && d.week === mStr && d.part === '2동');
 
-    const isOver = (p1.length > 1 || p2.length > 1);
+    const isOver = (p1.length > 1 || p2.length > 1 || p2Sub.length > 1);
     const closed = isMonthClosed(m);
     const canSelectMonthNight = canSelectNight && !closed;
     const isSelected = (canSelectMonthNight && currentApplyType === 'NIGHT_APPLY' && currentSelectedMonth === mStr);
@@ -1332,7 +1341,7 @@ function renderNightBoard() {
       card.onclick = () => selectNightMonth(mStr);
     }
 
-    const formatNightPart = (list, partName) => {
+    const formatNightPart = (list, partName, categoryKey = 'NIGHT') => {
       if (!publicList && !isAdmin) {
         if (list.length === 0) return `<span>0/1명</span>`;
         const confirmedList = list.filter(d => d.status === '확정');
@@ -1345,13 +1354,14 @@ function renderNightBoard() {
         return `${chips}${pendingTag || `<span class="${list.length > 1 ? 'over-text' : ''}">${list.length}/1명</span>`}`;
       }
       if (list.length === 0) return '<span style="color:#aaa;">공석</span>';
-      return renderChipsWithLimit(list, 'NIGHT', mStr, partName, true);
+      return renderChipsWithLimit(list, categoryKey, mStr, partName, true);
     };
 
     card.innerHTML = `
       <div class="night-m-header">${m}월 나이트킵 ${closed ? '<span style="color:#e03131; font-size:11px;">[신청종료]</span>' : (isOver && isAdjustMode() ? '🚨추첨' : '')}</div>
-      <div class="night-row"><strong>1동(1):</strong> ${formatNightPart(p1, '1동')}</div>
-      <div class="night-row"><strong>2동(1):</strong> ${formatNightPart(p2, '2동')}</div>
+      <div class="night-row"><strong>1동(1):</strong> ${formatNightPart(p1, '1동', 'NIGHT')}</div>
+      <div class="night-row"><strong>2동(1):</strong> ${formatNightPart(p2, '2동', 'NIGHT')}</div>
+      <div class="night-row" style="border-top:1px dashed #e5dbff; padding-top:4px;"><strong>2동sub(1):</strong> ${formatNightPart(p2Sub, '2동', 'SUB_NIGHT')}</div>
     `;
     grid.appendChild(card);
   }
@@ -1607,7 +1617,10 @@ async function submitForm() {
   let payload = {};
   let confirmMsg = '';
 
-  if (applyType === 'LEAVE') {
+if (applyType === 'LEAVE') {
+    if (part === '2동(sub)') {
+      return alert('2동(sub)은 서브나이트킵 전용 구분입니다.\n장기휴가 신청 시 소속을 [2동]으로 선택해 주세요.');
+    }
     if (!week) return alert('달력에서 원하는 주(월~금)를 클릭해주세요.');
     const candidateRange = parseTargetDateRange(week, '장기휴가');
     const consecErr = checkClientConsecutiveWarning(name, candidateRange, '장기휴가');
@@ -1619,13 +1632,14 @@ async function submitForm() {
                  `• 신청자: ${name} (${empId})\n` +
                  `• 신청 일정: ${week}\n\n` +
                  `신청하신 곳이 '${part}' 해당이 맞습니까?\n확인 버튼을 누르면 최종 접수됩니다.`;
-  } else if (applyType === 'NIGHT_APPLY') {
+ } else if (applyType === 'NIGHT_APPLY') {
     if (!targetMonth) return alert('나이트킵 희망 월을 선택해주세요.');
+    const nightTitle = part === '2동(sub)' ? '2동 서브나이트킵' : '나이트킵';
     payload = { action: 'APPLY_NIGHT', part, empId, name, targetMonth };
-    confirmMsg = `[나이트킵 최종 신청 확인]\n\n` +
+    confirmMsg = `[${nightTitle} 최종 신청 확인]\n\n` +
                  `• 소속 구분: 【 ${part} 】 해당\n` +
                  `• 신청자: ${name} (${empId})\n` +
-                 `• 희망 월: ${targetMonth} 나이트킵\n\n` +
+                 `• 희망 월: ${targetMonth} ${nightTitle}\n\n` +
                  `신청하신 곳이 '${part}' 해당이 맞습니까?\n확인 버튼을 누르면 최종 접수됩니다.`;
   } else if (applyType === 'NIGHT_WEEK') {
     if (!selectedNightDateISO) return alert('달력에서 나이트 오프 시작일을 클릭해주세요.');
