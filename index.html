@@ -230,7 +230,48 @@
     </div>
   </div>
 </div>
+ 
+<!-- 3-1. 본인 일정 변경 팝업 -->
+<div id="userModifyModal" class="modal-backdrop" onclick="if(event.target===this) closeUserModifyModal()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>✏️ 신청 일정 변경</span>
+      <button class="modal-close-x" onclick="closeUserModifyModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="userModTargetInfo" style="background:#f1f3f5; padding:10px 12px; border-radius:6px; margin-bottom:12px; font-size:13.5px; line-height:1.5;"></div>
+      
+      <!-- 1) 장기휴가 주차 변경 -->
+      <div id="userModLeaveBox" style="display:none;">
+        <label style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">변경할 주차 선택 (신청중·여유 주차만 가능):</label>
+        <select id="userModWeekSelect" style="width:100%; padding:10px; font-weight:bold; border-color:#0056b3;"></select>
+      </div>
 
+      <!-- 2) 나이트킵 희망 월 변경 -->
+      <div id="userModNightMonthBox" style="display:none;">
+        <label style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">변경할 나이트킵 희망 월 선택:</label>
+        <select id="userModMonthSelect" style="width:100%; padding:10px; font-weight:bold; border-color:#6f42c1;"></select>
+      </div>
+
+      <!-- 3) 나이트킵 오프 시작일·일수 변경 -->
+      <div id="userModNightOffBox" style="display:none;">
+        <label style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">변경할 오프 시작일 (2027년):</label>
+        <input type="date" id="userModNightDate" min="2027-01-01" max="2027-12-31" style="width:100%; padding:9px; font-weight:bold; border-color:#6f42c1; margin-bottom:10px;">
+        <label style="display:block; font-weight:bold; margin-bottom:6px; font-size:13.5px;">사용 일수 (최대 7일):</label>
+        <select id="userModNightDays" style="width:100%; padding:9px; font-weight:bold; border-color:#6f42c1;">
+          <option value="1">1일</option><option value="2">2일</option><option value="3">3일</option>
+          <option value="4">4일</option><option value="5">5일</option><option value="6">6일</option>
+          <option value="7">7일</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot" style="display:flex; gap:8px;">
+      <button onclick="closeUserModifyModal()" style="background:#6c757d; flex:1;">취소</button>
+      <button onclick="submitUserModify()" style="background:#1971c2; flex:2;">변경 저장</button>
+    </div>
+  </div>
+</div>
+ 
 <!-- 4. 관리자 일정 이동 팝업 (장기휴가 주차 / 나이트 오프 시작일·일수 겸용) -->
 <div id="moveWeekModal" class="modal-backdrop" onclick="if(event.target===this) closeMoveModal()">
   <div class="modal-card">
@@ -537,7 +578,7 @@ function checkClientConsecutiveWarning(name, candidateRange, targetType) {
   const ONE_DAY = 24 * 60 * 60 * 1000;
 
   for (const item of appData.data) {
-    if (item.status === '탈락') continue;
+    if (item.status === '탈락' || item.status === '취소됨') continue;
     const itemName = String(item.realName || item.name || '').replace(/\s+/g, '');
     if (!itemName || itemName === '***' || itemName !== normName) continue;
 
@@ -901,10 +942,10 @@ function openMoreModal(category, key, part) {
   let title = '';
 
   if (category === 'LEAVE') {
-    fullList = appData.data.filter(d => d.status !== '탈락' && d.type !== '나이트킵' && d.week.startsWith(key) && d.part === part);
+    fullList = appData.data.filter(d => d.status !== '탈락' && d.status !== '취소됨' && d.type !== '나이트킵' && d.week.startsWith(key) && d.part === part);
     title = `📋 ${key} - ${part} 전체 신청자 (${fullList.length}명)`;
   } else {
-    fullList = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락' && (d.week === key || d.week.includes(`[${key}나이트]`)) && d.part === part);
+    fullList = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락' && d.status !== '취소됨' && (d.week === key || d.week.includes(`[${key}나이트]`)) && d.part === part);
     title = `🌙 ${key} 나이트킵 - ${part} 전체 신청자 (${fullList.length}명)`;
   }
 
@@ -938,7 +979,7 @@ async function toggleFlag(rowIdx) {
       const mMatch = target.week.match(/\[(\d{1,2}월)나이트\]/) || target.week.match(/^(\d{1,2}월)$/);
       const monthKey = mMatch ? mMatch[1] : target.week;
       sameGroup = appData.data.filter(d =>
-        d.status !== '탈락' &&
+        d.status !== '탈락' && d.status !== '취소됨' &&
         d.type === '나이트킵' &&
         d.part === target.part &&
         (d.week === monthKey || d.week.includes(`[${monthKey}나이트]`))
@@ -946,7 +987,7 @@ async function toggleFlag(rowIdx) {
     } else {
       const weekKey = target.week.split(' [')[0];
       sameGroup = appData.data.filter(d =>
-        d.status !== '탈락' &&
+        d.status !== '탈락' && d.status !== '취소됨' &&
         (d.type || '장기휴가') === '장기휴가' &&
         d.part === target.part &&
         d.week.startsWith(weekKey)
@@ -1025,6 +1066,9 @@ function formatReadableTarget(rawTarget, type) {
   return rawTarget;
 }
 
+let currentMyAppsList = [];
+let userModifyContext = null;
+
 async function searchMyApps() {
   const name = document.getElementById('checkName').value.trim();
   const empId = document.getElementById('checkEmpId').value.trim();
@@ -1045,28 +1089,41 @@ async function searchMyApps() {
       return alert(result.message);
     }
 
-    if (!result.apps || result.apps.length === 0) {
+    currentMyAppsList = result.apps || [];
+    if (currentMyAppsList.length === 0) {
       resEl.innerHTML = '<div style="text-align:center; color:#888; padding:15px;">일치하는 신청 내역이 없습니다.</div>';
       return;
     }
 
-    resEl.innerHTML = result.apps.map(app => {
-      const canDel = result.canDelete && app.status === '신청중';
-      let noDelReason = '삭제불가';
-      if (!result.canDelete) noDelReason = '전체공개 중 삭제불가';
-      else if (app.status === '확정') noDelReason = '확정건 삭제불가 (관리자 문의)';
+    resEl.innerHTML = currentMyAppsList.map(app => {
+      let noActReason = '변경/취소 불가';
+      if (app.status === '탈락' || app.status === '취소됨') noActReason = `${app.status} 건`;
+      else if (app.monthClosed) noActReason = '해당 월 신청종료';
+      else if (!result.canDelete) noActReason = '전체공개 중 불가';
 
-      const delBtn = canDel
-        ? `<button class="btn-danger" style="padding:6px 10px; font-size:12px;" onclick="cancelMyApp(${Number(app.rowIdx)})">신청 취소(삭제)</button>`
-        : `<span style="font-size:11px; color:#888;">${noDelReason}</span>`;
+      const modBtn = app.canModify
+        ? `<button class="btn-move" style="padding:6px 10px; font-size:12px;" onclick="openUserModifyModal(${Number(app.rowIdx)})">변경</button>`
+        : '';
+      const delBtn = app.canDelete
+        ? `<button class="btn-danger" style="padding:6px 10px; font-size:12px;" onclick="cancelMyApp(${Number(app.rowIdx)})">취소</button>`
+        : '';
 
-      return `<div class="my-app-item">
-        <div class="my-app-info">
+      const actionArea = (modBtn || delBtn)
+        ? `<div style="display:flex; gap:4px; flex-direction:column;">${modBtn}${delBtn}</div>`
+        : `<span style="font-size:11px; color:#888;">${noActReason}</span>`;
+
+      const historyHtml = app.history
+        ? `<div style="margin-top:6px; padding-top:5px; border-top:1px dashed #dee2e6; font-size:11.5px; color:#555; white-space:pre-wrap;">📝 ${esc(app.history)}</div>`
+        : '';
+
+      return `<div class="my-app-item" style="align-items:flex-start;">
+        <div class="my-app-info" style="flex:1;">
           <div><strong>[${esc(app.type)}]</strong> ${esc(app.part)} · ${esc(app.round)}차</div>
           <div style="color:#0056b3; font-weight:bold;">${esc(formatReadableTarget(app.target, app.type))}</div>
           <div>상태: <span class="status-pill">${esc(app.status)}</span></div>
+          ${historyHtml}
         </div>
-        <div>${delBtn}</div>
+        <div>${actionArea}</div>
       </div>`;
     }).join('');
   } catch (err) {
@@ -1076,8 +1133,134 @@ async function searchMyApps() {
   }
 }
 
+function openUserModifyModal(rowIdx) {
+  const app = currentMyAppsList.find(a => Number(a.rowIdx) === Number(rowIdx));
+  if (!app) return alert('내역을 찾을 수 없습니다.');
+
+  const isNight = app.type === '나이트킵';
+  const hasNightOff = isNight && (/^\d{4}-\d{2}-\d{2}\|/.test(app.target) || app.target.includes('주차'));
+
+  userModifyContext = {
+    rowIdx: Number(rowIdx),
+    part: app.part,
+    type: app.type,
+    mode: !isNight ? 'LEAVE' : (hasNightOff ? 'NIGHT_OFF' : 'NIGHT_MONTH')
+  };
+
+  document.getElementById('userModTargetInfo').innerHTML =
+    `• <strong>구분:</strong> ${esc(app.type)} (${esc(app.part)} / ${esc(app.status)})<br>` +
+    `• <strong>현재 일정:</strong> <span style="color:#0056b3; font-weight:bold;">${esc(formatReadableTarget(app.target, app.type))}</span>`;
+
+  document.getElementById('userModLeaveBox').style.display = 'none';
+  document.getElementById('userModNightMonthBox').style.display = 'none';
+  document.getElementById('userModNightOffBox').style.display = 'none';
+
+  if (userModifyContext.mode === 'LEAVE') {
+    document.getElementById('userModLeaveBox').style.display = 'block';
+    const sel = document.getElementById('userModWeekSelect');
+    const weeks = Object.values(WEEK_MAP_BY_MON).sort((a, b) => a.weekNum - b.weekNum);
+    const cap = app.part === '1동' ? 2 : 1;
+
+    sel.innerHTML = weeks.map(w => {
+      const mNum = w.mon.getMonth() + 1;
+      const closed = isMonthClosed(mNum);
+      const cnt = appData.data.filter(d =>
+        d.status !== '탈락' && d.status !== '취소됨' &&
+        (d.type || '장기휴가') === '장기휴가' &&
+        d.part === app.part && d.week.startsWith(w.label)
+      ).length;
+      const isCurrent = app.target.startsWith(w.label);
+      const isFull = !isCurrent && cnt >= cap;
+      const tag = closed ? '[신청종료]' : (isFull ? '[정원초과]' : `[${cnt}/${cap}명]`);
+      return `<option value="${esc(w.label)}" ${isCurrent ? 'selected' : ''} ${(closed || isFull) ? 'disabled' : ''}>${esc(w.label)} ${tag}</option>`;
+    }).join('');
+  } else if (userModifyContext.mode === 'NIGHT_MONTH') {
+    document.getElementById('userModNightMonthBox').style.display = 'block';
+    const sel = document.getElementById('userModMonthSelect');
+    let opts = '';
+    for (let m = 1; m <= 12; m++) {
+      const mStr = `${m}월`;
+      const closed = isMonthClosed(m);
+      const cnt = appData.data.filter(d =>
+        d.status !== '탈락' && d.status !== '취소됨' &&
+        d.type === '나이트킵' && d.part === app.part &&
+        (d.week === mStr || d.week.includes(`[${mStr}나이트]`))
+      ).length;
+      const isCurrent = app.target === mStr;
+      const isFull = !isCurrent && cnt >= 1;
+      const tag = closed ? '[신청종료]' : (isFull ? '[정원초과]' : `[${cnt}/1명]`);
+      opts += `<option value="${mStr}" ${isCurrent ? 'selected' : ''} ${(closed || isFull) ? 'disabled' : ''}>${mStr} 나이트킵 ${tag}</option>`;
+    }
+    sel.innerHTML = opts;
+  } else {
+    document.getElementById('userModNightOffBox').style.display = 'block';
+    const rangeInfo = parseTargetDateRange(app.target, '나이트킵');
+    document.getElementById('userModNightDate').value = rangeInfo ? rangeInfo.startISO : '2027-01-04';
+    document.getElementById('userModNightDays').value = rangeInfo ? String(rangeInfo.days) : '5';
+  }
+
+  document.getElementById('userModifyModal').style.display = 'flex';
+}
+
+function closeUserModifyModal() {
+  userModifyContext = null;
+  document.getElementById('userModifyModal').style.display = 'none';
+}
+
+async function submitUserModify() {
+  if (!userModifyContext) return;
+  const name = document.getElementById('checkName').value.trim();
+  const empId = document.getElementById('checkEmpId').value.trim();
+
+  const payload = {
+    action: 'MODIFY_MY_APP',
+    name,
+    empId,
+    rowIdx: userModifyContext.rowIdx
+  };
+
+  if (userModifyContext.mode === 'LEAVE') {
+    payload.newWeek = document.getElementById('userModWeekSelect').value;
+  } else if (userModifyContext.mode === 'NIGHT_MONTH') {
+    payload.newMonth = document.getElementById('userModMonthSelect').value;
+  } else {
+    const startDate = document.getElementById('userModNightDate').value;
+    const days = Number(document.getElementById('userModNightDays').value || 5);
+    if (!startDate) return alert('시작일을 선택해주세요.');
+    const mNum = Number(startDate.split('-')[1]);
+    if (isMonthClosed(mNum)) {
+      return alert(`변경하려는 ${mNum}월은 이미 신청종료되어 변경할 수 없습니다.`);
+    }
+    payload.startDate = startDate;
+    payload.days = days;
+  }
+
+  if (!confirm('선택한 일정으로 변경하시겠습니까?')) return;
+
+  setLoading(true, '일정 변경 중...');
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    alert(result.message);
+    if (result.success) {
+      closeUserModifyModal();
+      await fetchData();
+      await searchMyApps();
+    }
+  } catch (err) {
+    alert('변경 처리 중 오류가 발생했습니다. 새로고침 후 다시 시도해주세요.');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
+
 async function cancelMyApp(rowIdx) {
-  if (!confirm('해당 신청 내역을 삭제하시겠습니까?\n삭제 후 원하시는 일정으로 다시 신청하실 수 있습니다.')) return;
+  if (!confirm('해당 신청 내역을 취소(삭제)하시겠습니까?\n취소 후 원하시는 일정으로 다시 신청하실 수 있습니다.')) return;
   const name = document.getElementById('checkName').value.trim();
   const empId = document.getElementById('checkEmpId').value.trim();
 
@@ -1095,7 +1278,7 @@ async function cancelMyApp(rowIdx) {
       await searchMyApps();
     }
   } catch (err) {
-    alert('삭제 처리 중 오류가 발생했습니다.');
+    alert('취소 처리 중 오류가 발생했습니다.');
     console.error(err);
   } finally {
     setLoading(false);
@@ -1106,7 +1289,7 @@ function renderNightBoard() {
   const grid = document.getElementById('nightGrid');
   grid.innerHTML = '';
 
-  const nightApps = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락');
+  const nightApps = appData.data.filter(d => d.type === '나이트킵' && d.status !== '탈락' && d.status !== '취소됨');
   const round = String(appData.config.round || '1');
   const isOpen = Boolean(appData.config.isOpen);
   const publicList = isPublicListMode();
@@ -1222,14 +1405,14 @@ function renderCalendars() {
 
       let p1Leaves = [], p2Leaves = [], nightOffList = [], isOver = false, isCompleted = false;
 
-      if (isValidWeek) {
-        const weekApps = appData.data.filter(d => d.status !== '탈락' && d.type !== '나이트킵' && d.week.startsWith(weekInfo.label));
+        if (isValidWeek) {
+        const weekApps = appData.data.filter(d => d.status !== '탈락' && d.status !== '취소됨' && d.type !== '나이트킵' && d.week.startsWith(weekInfo.label));
         p1Leaves = weekApps.filter(d => d.part === '1동');
         p2Leaves = weekApps.filter(d => d.part === '2동');
 
         // 해당 주차 블록에 속하는 나이트 오프 필터링
         nightOffList = appData.data.filter(d => {
-          if (d.status === '탈락' || d.type !== '나이트킵') return false;
+          if (d.status === '탈락' || d.status === '취소됨' || d.type !== '나이트킵') return false;
           const dispWeekNum = getDisplayWeekNumForNight(d.week);
           return dispWeekNum === weekInfo.weekNum;
         });
@@ -1622,9 +1805,9 @@ function openMoveModal(rowIdx) {
     const sel = document.getElementById('moveWeekSelect');
     const weeks = Object.values(WEEK_MAP_BY_MON).sort((a, b) => a.weekNum - b.weekNum);
 
-    sel.innerHTML = weeks.map(w => {
-      const p1Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '1동' && d.week.startsWith(w.label)).length;
-      const p2Cnt = appData.data.filter(d => d.status !== '탈락' && (d.type || '장기휴가') === '장기휴가' && d.part === '2동' && d.week.startsWith(w.label)).length;
+      sel.innerHTML = weeks.map(w => {
+      const p1Cnt = appData.data.filter(d => d.status !== '탈락' && d.status !== '취소됨' && (d.type || '장기휴가') === '장기휴가' && d.part === '1동' && d.week.startsWith(w.label)).length;
+      const p2Cnt = appData.data.filter(d => d.status !== '탈락' && d.status !== '취소됨' && (d.type || '장기휴가') === '장기휴가' && d.part === '2동' && d.week.startsWith(w.label)).length;
       const isCurrent = item.week.startsWith(w.label);
       const statusText = `[1동:${p1Cnt}/2, 2동:${p2Cnt}/1]${isCurrent ? ' (현재)' : ''}`;
       return `<option value="${esc(w.label)}" ${isCurrent ? 'selected' : ''}>${esc(w.label)} ${statusText}</option>`;
