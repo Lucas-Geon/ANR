@@ -1105,6 +1105,7 @@ async function searchMyApps() {
     resEl.innerHTML = currentMyAppsList.map(app => {
       let noActReason = '변경/취소 불가';
       if (app.status === '탈락' || app.status === '취소됨') noActReason = `${app.status} 건`;
+      else if (app.status === '확정' && app.type === '나이트킵') noActReason = '확정 후 변경불가';
       else if (app.monthClosed) noActReason = '해당 월 신청종료';
       else if (!result.canDelete) noActReason = '전체공개 중 불가';
 
@@ -1209,7 +1210,7 @@ const isNight = app.type === '나이트킵';
       const isCurrent = app.target === mStr;
       const isBlocked = !isCurrent && (confirmedCnt >= 1);
       const tag = closed ? '[신청종료]' : (isBlocked ? '[확정마감]' : (cnt >= 1 ? `[${cnt}/1명·경합]` : `[${cnt}/1명]`));
-      opts += `<option value="${mStr}" ${isCurrent ? 'selected' : ''} ${(closed || isBlocked) ? 'disabled' : ''}>${mStr} 나이트킵 ${tag}</option>`;
+      opts += `<option value="${mStr}" ${isCurrent ? 'selected' : ''} ${(closed || isBlocked) ? 'disabled' : ''}>${mStr} ${labelTitle} ${tag}</option>`;
     }
     sel.innerHTML = opts;
   } else {
