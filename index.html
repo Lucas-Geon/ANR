@@ -1210,6 +1210,7 @@ const isNight = app.type === '나이트킵';
       const isCurrent = app.target === mStr;
       const isBlocked = !isCurrent && (confirmedCnt >= 1);
       const tag = closed ? '[신청종료]' : (isBlocked ? '[확정마감]' : (cnt >= 1 ? `[${cnt}/1명·경합]` : `[${cnt}/1명]`));
+      const labelTitle = app.type === '서브나이트킵' ? '2동 서브나이트킵' : '나이트킵'; // ← 이 줄 추가! 
       opts += `<option value="${mStr}" ${isCurrent ? 'selected' : ''} ${(closed || isBlocked) ? 'disabled' : ''}>${mStr} ${labelTitle} ${tag}</option>`;
     }
     sel.innerHTML = opts;
